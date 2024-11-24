@@ -41,7 +41,7 @@ def open_window(icon):
 
         # Set the window size
         window_width = 300
-        window_height = 200
+        window_height = 400
 
         # Calculate the position to open the window above the mouse
         # This will place the window slightly above the cursor
@@ -78,13 +78,18 @@ def open_window(icon):
         device_dropdown = tk.OptionMenu(window, selected_device,  *[device[0] for device in devices])
         device_dropdown.pack(pady=10)
 
-        # Turn on button
-        turn_on_button = tk.Button(window, text="Turn On", command=lambda: action.turn_on(bulb))
+        # Toggle on/off button
+        turn_on_button = tk.Button(window, text="Toggle on/off", command=lambda: action.Toggle_bulb(bulb,False))
         turn_on_button.pack(pady=10)
 
-        # Turn off button
-        turn_off_button = tk.Button(window, text="Turn Off", command=lambda: action.turn_off(bulb))
-        turn_off_button.pack(pady=10)
+        # turn On all button
+        turn_on_button = tk.Button(window, text="turn On all", command=lambda: action.turn_on_all_bulbs(devices))
+        turn_on_button.pack(pady=10)
+
+        # turn off all button
+        turn_on_button = tk.Button(window, text="turn off all", command=lambda: action.turn_off_all_bulbs(devices))
+        turn_on_button.pack(pady=10)
+
 
         # Set Red button
         set_red_button = tk.Button(window, text="Set Red", command=lambda: action.set_red(bulb))
@@ -116,13 +121,12 @@ def open_window(icon):
 
 # Function to start the system tray
 def run_tray():
-    menu = Menu(
-        MenuItem('Open Control Window', open_window),
-        MenuItem('Quit', quit_action)
-    )
 
-    icon = Icon("Magic Home Control", create_image(), menu=menu)
-    
+    icon = Icon(name="Magic Home Control",icon=create_image(),title="Magic Home Control",menu=Menu(
+    MenuItem(text="Left-Click-Action",action=open_window,default=True),
+    MenuItem(text="Quit", action=quit_action)
+))
+
 
     # Run the system tray icon
     icon.run()
