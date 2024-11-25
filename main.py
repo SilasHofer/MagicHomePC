@@ -2,6 +2,7 @@ import sys
 import time
 import threading
 import tkinter as tk
+from colorsys import hsv_to_rgb
 from pystray import Icon, MenuItem, Menu
 from PIL import Image, ImageDraw
 from flux_led import WifiLedBulb
@@ -12,7 +13,7 @@ import bulb_actions as action
 def create_image():
     # Create an image with PIL (Python Imaging Library)
     width, height = 64, 64
-    image = Image.open("pictures/icon.png")
+    image = Image.open("C:\light_controll\Control-lights\pictures\icon.png")
     draw = ImageDraw.Draw(image)
 
     # Draw a simple circle (could be an icon)
@@ -27,7 +28,8 @@ def quit_action(icon):
 
 # Function to open the Tkinter window for light control
 def open_window(icon):
-    bulb = WifiLedBulb("192.168.0.48")
+    #bulb = WifiLedBulb("192.168.0.48")
+    bulb = None
     # Check if the window is already open
     if not hasattr(open_window, "window_opened") or not open_window.window_opened:
         open_window.window_opened = True
@@ -101,6 +103,44 @@ def open_window(icon):
         # Set brightness button
         set_brightness_button = tk.Button(window, text="Set Brightness (50%)", command=lambda: action.set_brightness(bulb))
         set_brightness_button.pack(pady=10)
+
+        # Create the canvas for the color wheel
+        canvas_size = 300
+        canvas = tk.Canvas(window, width=canvas_size, height=canvas_size, bg="white")
+        canvas.pack(pady=10)
+
+        # Draw the color wheel
+        radius = canvas_size // 2
+        for x in range(canvas_size):
+            for y in range(canvas_size):
+                dx = x - radius
+                dy = y - radius
+                distance = (dx**2 + dy**2)**0.5
+                if distance <= radius:  # Point is inside the circle
+                    # Calculate hue and saturation
+                    angle = (180 + (180 / 3.14159) * (-1 * dy / distance)) % 360 if distance > 0 else 0
+                    hue = angle / 360
+                    saturation = distance / radius
+                    red, green, blue = hsv_to_rgb(hue, saturation, 1)
+                    color = "#{:02x}{:02x}{:02x}".format(int(red * 255), int(green * 255), int(blue * 255))
+                    canvas.create_line(x, y, x + 1, y, fill=color)  # Draw pixel
+
+        # Handle user click on the color wheel
+        def on_color_select(event):
+            dx = event.x - radius
+            dy = event.y - radius
+            distance = (dx**2 + dy**2)**0.5
+            if distance <= radius:  # Check if click is inside the wheel
+                angle = (180 + (180 / 3.14159) * (-1 * dy / distance)) % 360 if distance > 0 else 0
+                hue = angle / 360
+                saturation = distance / radius
+                red, green, blue = hsv_to_rgb(hue, saturation, 1)
+                hex_color = "#{:02x}{:02x}{:02x}".format(int(red * 255), int(green * 255), int(blue * 255))
+                print(f"Selected color: {hex_color}")  # Debug print
+                if bulb:
+                    action.set_color(bulb, hex_color)  # Send the color to the bulb
+
+        canvas.bind("<Button-1>", on_color_select)
 
         # Quit button for the window
         quit_button = tk.Button(window, text="Quit", command=lambda: quit_action(icon))
