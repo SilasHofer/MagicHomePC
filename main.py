@@ -1,8 +1,9 @@
 import sys
+import math
 import time
 import threading
 import tkinter as tk
-from colorsys import hsv_to_rgb
+from colorsys import hsv_to_rgb, rgb_to_hsv
 from pystray import Icon, MenuItem, Menu
 from PIL import Image, ImageDraw
 from flux_led import WifiLedBulb
@@ -13,7 +14,7 @@ import bulb_actions as action
 def create_image():
     # Create an image with PIL (Python Imaging Library)
     width, height = 64, 64
-    image = Image.open("C:\light_controll\Control-lights\pictures\icon.png")
+    image = Image.open("pictures\icon.png")
     draw = ImageDraw.Draw(image)
 
     # Draw a simple circle (could be an icon)
@@ -28,8 +29,7 @@ def quit_action(icon):
 
 # Function to open the Tkinter window for light control
 def open_window(icon):
-    #bulb = WifiLedBulb("192.168.0.48")
-    bulb = None
+    bulb = WifiLedBulb("192.168.0.48")
     # Check if the window is already open
     if not hasattr(open_window, "window_opened") or not open_window.window_opened:
         open_window.window_opened = True
@@ -81,7 +81,7 @@ def open_window(icon):
         device_dropdown.pack(pady=10)
 
         # Toggle on/off button
-        turn_on_button = tk.Button(window, text="Toggle on/off", command=lambda: action.Toggle_bulb(bulb,False))
+        turn_on_button = tk.Button(window, text="Toggle on/off", command=lambda: action.Toggle_bulb(bulb))
         turn_on_button.pack(pady=10)
 
         # turn On all button
@@ -92,25 +92,14 @@ def open_window(icon):
         turn_on_button = tk.Button(window, text="turn off all", command=lambda: action.turn_off_all_bulbs(devices))
         turn_on_button.pack(pady=10)
 
-
-        # Set Red button
-        set_red_button = tk.Button(window, text="Set Red", command=lambda: action.set_red(bulb))
-        set_red_button.pack(pady=10)
-
-        set_white_button = tk.Button(window, text="Set white", command=lambda: action.set_white(bulb))
-        set_white_button.pack(pady=10)
-
-        # Set brightness button
-        set_brightness_button = tk.Button(window, text="Set Brightness (50%)", command=lambda: action.set_brightness(bulb))
-        set_brightness_button.pack(pady=10)
-
         # Create the canvas for the color wheel
-        canvas_size = 300
-        canvas = tk.Canvas(window, width=canvas_size, height=canvas_size, bg="white")
+        canvas_size = 150
+        canvas = tk.Canvas(window, width=canvas_size, height=canvas_size, bg=window["bg"], highlightthickness=0)
         canvas.pack(pady=10)
 
         # Draw the color wheel
         radius = canvas_size // 2
+    
         for x in range(canvas_size):
             for y in range(canvas_size):
                 dx = x - radius
@@ -118,12 +107,32 @@ def open_window(icon):
                 distance = (dx**2 + dy**2)**0.5
                 if distance <= radius:  # Point is inside the circle
                     # Calculate hue and saturation
-                    angle = (180 + (180 / 3.14159) * (-1 * dy / distance)) % 360 if distance > 0 else 0
+                    angle = math.degrees(math.atan2(dy, dx)) % 360
                     hue = angle / 360
                     saturation = distance / radius
                     red, green, blue = hsv_to_rgb(hue, saturation, 1)
                     color = "#{:02x}{:02x}{:02x}".format(int(red * 255), int(green * 255), int(blue * 255))
                     canvas.create_line(x, y, x + 1, y, fill=color)  # Draw pixel
+        
+            # Convert RGB to HSV
+        red, green, blue = [c / 255 for c in action.get_color(bulb)]  # Normalize RGB to 0–1
+        hue, saturation, _ = rgb_to_hsv(red, green, blue)
+
+        # Convert HSV to position on the canvas
+        angle = hue * 360  # Hue in degrees
+        distance = saturation * radius
+        x = int(radius + distance * math.cos(math.radians(angle)))
+        y = int(radius + distance * math.sin(math.radians(angle)))
+
+        # Draw a white point
+        point_size = 3  # Size of the marker
+        marker = canvas.create_oval(x - point_size, y - point_size, x + point_size, y + point_size, fill="white", outline="black")
+
+
+        # Set brightness button
+        set_brightness_button = tk.Button(window, text="Set Brightness (50%)", command=lambda: action.set_brightness(bulb))
+        set_brightness_button.pack(pady=10)
+
 
         # Handle user click on the color wheel
         def on_color_select(event):
@@ -131,14 +140,18 @@ def open_window(icon):
             dy = event.y - radius
             distance = (dx**2 + dy**2)**0.5
             if distance <= radius:  # Check if click is inside the wheel
-                angle = (180 + (180 / 3.14159) * (-1 * dy / distance)) % 360 if distance > 0 else 0
+                angle = math.degrees(math.atan2(dy, dx)) % 3600
                 hue = angle / 360
                 saturation = distance / radius
                 red, green, blue = hsv_to_rgb(hue, saturation, 1)
-                hex_color = "#{:02x}{:02x}{:02x}".format(int(red * 255), int(green * 255), int(blue * 255))
-                print(f"Selected color: {hex_color}")  # Debug print
+                color = (int(red * 255), int(green * 255), int(blue * 255))
                 if bulb:
-                    action.set_color(bulb, hex_color)  # Send the color to the bulb
+                    action.set_rgb(bulb, color) # Send the color to the bulb
+                    angle = hue * 360  # Hue in degrees
+                    distance = saturation * radius
+                    x = int(radius + distance * math.cos(math.radians(angle)))
+                    y = int(radius + distance * math.sin(math.radians(angle)))
+                    canvas.coords(marker,x - point_size, y - point_size, x + point_size, y + point_size)
 
         canvas.bind("<Button-1>", on_color_select)
 

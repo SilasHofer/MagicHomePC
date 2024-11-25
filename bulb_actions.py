@@ -20,13 +20,9 @@ def turn_on_all_bulbs(devices):
         bulb.turnOn()
 
 
-
 # Function to change color to Red
-def set_red(bulb):
-    bulb.setRgb(255, 0, 0)  # Red color
-
-def set_white(bulb):
-    bulb.setRgb(255, 255, 255)
+def set_rgb(bulb,color):
+    bulb.setRgb(color[0],color[1],color[2])  # Red color
 
 # Function to set brightness to 128 (50%)
 def set_brightness(bulb):
@@ -34,4 +30,6 @@ def set_brightness(bulb):
 
 def get_status(bulb):
     return bulb.is_on
-    
+
+def get_color(bulb):
+    return bulb.getRgb()
