@@ -1,0 +1,23 @@
+import math
+import shared_state
+import bulb_actions as action
+from colorsys import hsv_to_rgb
+
+# Handle user click on the color wheel
+def on_color_select(event,radius,canvas,marker,point_size):
+    dx = event.x - radius
+    dy = event.y - radius
+    distance = (dx**2 + dy**2)**0.5
+    if distance <= radius:  # Check if click is inside the wheel
+        angle = math.degrees(math.atan2(dy, dx)) % 3600
+        hue = angle / 360
+        saturation = distance / radius
+        red, green, blue = hsv_to_rgb(hue, saturation, 1)
+        color = (int(red * 255), int(green * 255), int(blue * 255))
+        if shared_state.bulb:
+            action.set_rgb(color) # Send the color to the bulb
+            angle = hue * 360  # Hue in degrees
+            distance = saturation * radius
+            x = int(radius + distance * math.cos(math.radians(angle)))
+            y = int(radius + distance * math.sin(math.radians(angle)))
+            canvas.coords(marker,x - point_size, y - point_size, x + point_size, y + point_size)

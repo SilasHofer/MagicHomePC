@@ -8,6 +8,8 @@ from pystray import Icon, MenuItem, Menu
 from PIL import Image, ImageDraw
 from flux_led import WifiLedBulb
 import bulb_actions as action
+import shared_state
+import help_funktions as help
 
 
 # Function to create the system tray icon
@@ -29,7 +31,7 @@ def quit_action(icon):
 
 # Function to open the Tkinter window for light control
 def open_window(icon):
-    bulb = WifiLedBulb("192.168.0.48")
+    shared_state.bulb = WifiLedBulb("192.168.0.48")
     # Check if the window is already open
     if not hasattr(open_window, "window_opened") or not open_window.window_opened:
         open_window.window_opened = True
@@ -61,27 +63,14 @@ def open_window(icon):
         selected_device = tk.StringVar(window)
         selected_device.set(devices[0][0])  # Default value
 
-        def get_ip_of_selected_device():
-            selected_name = selected_device.get()
-            for device in devices:
-                if device[0] == selected_name:
-                    return device[1]  # Return the IP address of the selected device
-            return None  # If no match is found, return None
-
-        def change_device(*args):
-            ip = get_ip_of_selected_device()
-            nonlocal bulb 
-            bulb = WifiLedBulb(ip)
-
-
-        selected_device.trace("w", change_device)
+        selected_device.trace("w", lambda *args: action.change_device(selected_device, devices,shared_state.bulb))
 
         # Dropdown menu to select a device
         device_dropdown = tk.OptionMenu(window, selected_device,  *[device[0] for device in devices])
         device_dropdown.pack(pady=10)
 
         # Toggle on/off button
-        turn_on_button = tk.Button(window, text="Toggle on/off", command=lambda: action.Toggle_bulb(bulb))
+        turn_on_button = tk.Button(window, text="Toggle on/off", command=lambda: action.Toggle_bulb())
         turn_on_button.pack(pady=10)
 
         # turn On all button
@@ -115,7 +104,7 @@ def open_window(icon):
                     canvas.create_line(x, y, x + 1, y, fill=color)  # Draw pixel
         
             # Convert RGB to HSV
-        red, green, blue = [c / 255 for c in action.get_color(bulb)]  # Normalize RGB to 0–1
+        red, green, blue = [c / 255 for c in action.get_color()]  # Normalize RGB to 0–1
         hue, saturation, _ = rgb_to_hsv(red, green, blue)
 
         # Convert HSV to position on the canvas
@@ -130,30 +119,11 @@ def open_window(icon):
 
 
         # Set brightness button
-        set_brightness_button = tk.Button(window, text="Set Brightness (50%)", command=lambda: action.set_brightness(bulb))
+        set_brightness_button = tk.Button(window, text="Set Brightness (50%)", command=lambda: action.set_brightness())
         set_brightness_button.pack(pady=10)
 
 
-        # Handle user click on the color wheel
-        def on_color_select(event):
-            dx = event.x - radius
-            dy = event.y - radius
-            distance = (dx**2 + dy**2)**0.5
-            if distance <= radius:  # Check if click is inside the wheel
-                angle = math.degrees(math.atan2(dy, dx)) % 3600
-                hue = angle / 360
-                saturation = distance / radius
-                red, green, blue = hsv_to_rgb(hue, saturation, 1)
-                color = (int(red * 255), int(green * 255), int(blue * 255))
-                if bulb:
-                    action.set_rgb(bulb, color) # Send the color to the bulb
-                    angle = hue * 360  # Hue in degrees
-                    distance = saturation * radius
-                    x = int(radius + distance * math.cos(math.radians(angle)))
-                    y = int(radius + distance * math.sin(math.radians(angle)))
-                    canvas.coords(marker,x - point_size, y - point_size, x + point_size, y + point_size)
-
-        canvas.bind("<Button-1>", on_color_select)
+        canvas.bind("<Button-1>", lambda event: help.on_color_select(event, radius, canvas,marker,point_size))
 
         # Quit button for the window
         quit_button = tk.Button(window, text="Quit", command=lambda: quit_action(icon))
