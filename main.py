@@ -55,6 +55,10 @@ def open_window(icon):
         # Set the window size and position
         window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
 
+
+        frame = tk.Frame(window)
+        frame.pack(pady=5)
+
         # List of devices (bulbs) to choose from in the dropdown
         devices = [
             ("Lampe", "192.168.0.48"),
@@ -66,20 +70,20 @@ def open_window(icon):
         selected_device.trace("w", lambda *args: action.change_device(selected_device, devices,shared_state.bulb))
 
         # Dropdown menu to select a device
-        device_dropdown = tk.OptionMenu(window, selected_device,  *[device[0] for device in devices])
-        device_dropdown.pack(pady=10)
+        device_dropdown = tk.OptionMenu(frame, selected_device,  *[device[0] for device in devices])
+        device_dropdown.grid(row=0, column=2, padx=5,pady=10)
 
         # Toggle on/off button
-        turn_on_button = tk.Button(window, text="Toggle on/off", command=lambda: action.Toggle_bulb())
-        turn_on_button.pack(pady=10)
+        turn_on_button = tk.Button(frame, text="Toggle on/off", command=lambda: action.Toggle_bulb())
+        turn_on_button.grid(row=1, column=1, padx=5)
 
         # turn On all button
-        turn_on_button = tk.Button(window, text="turn On all", command=lambda: action.turn_on_all_bulbs(devices))
-        turn_on_button.pack(pady=10)
+        turn_on_button = tk.Button(frame, text="turn On all", command=lambda: action.turn_on_all_bulbs(devices))
+        turn_on_button.grid(row=1, column=2, padx=5)
 
         # turn off all button
-        turn_on_button = tk.Button(window, text="turn off all", command=lambda: action.turn_off_all_bulbs(devices))
-        turn_on_button.pack(pady=10)
+        turn_on_button = tk.Button(frame, text="turn off all", command=lambda: action.turn_off_all_bulbs(devices))
+        turn_on_button.grid(row=1, column=3, padx=5)
 
         # Create the canvas for the color wheel
         canvas_size = 150
@@ -116,6 +120,32 @@ def open_window(icon):
         # Draw a white point
         point_size = 3  # Size of the marker
         marker = canvas.create_oval(x - point_size, y - point_size, x + point_size, y + point_size, fill="white", outline="black")
+
+
+
+        # Create a frame to hold the RGB input boxes on one line
+        frame_rgb = tk.Frame(window)
+        frame_rgb.pack(pady=5)
+
+        # Label for RGB
+        tk.Label(frame_rgb, text="RGB (0-255):").grid(row=0, column=1, padx=5)
+
+        # Create validation command
+        validate_command = window.register(help.validate_rgb_input)
+
+        color = action.get_color()
+
+        # Red Input Box
+        red_input = tk.Entry(frame_rgb, textvariable=tk.StringVar(value=color[0]), validate="key", validatecommand=(validate_command, "%P"), width=5)
+        red_input.grid(row=2, column=0, padx=5)
+
+        # Green Input Box
+        green_input = tk.Entry(frame_rgb, textvariable=tk.StringVar(value=color[1]), validate="key", validatecommand=(validate_command, "%P"), width=5)
+        green_input.grid(row=2, column=1, padx=5)
+
+        # Blue Input Box
+        blue_input = tk.Entry(frame_rgb, textvariable=tk.StringVar(value=color[2]), validate="key", validatecommand=(validate_command, "%P"), width=5)
+        blue_input.grid(row=2, column=2, padx=5)
 
 
         # Set brightness button

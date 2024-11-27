@@ -21,3 +21,17 @@ def on_color_select(event,radius,canvas,marker,point_size):
             x = int(radius + distance * math.cos(math.radians(angle)))
             y = int(radius + distance * math.sin(math.radians(angle)))
             canvas.coords(marker,x - point_size, y - point_size, x + point_size, y + point_size)
+
+
+
+        # Function to validate the input (only allow digits and limit the length to 3 digits)
+def validate_rgb_input(P):
+    # Allow empty input (to delete the current value)
+    if P == "":
+        return True
+    # Allow only digits and ensure the value is between 0 and 255
+    if P.isdigit() and len(P) <= 3:
+        value = int(P)
+        if 0 <= value <= 255:  # Ensure the number is between 0 and 255
+            return True
+    return False
