@@ -18,9 +18,20 @@ def on_color_select(event,radius,canvas,marker,point_size):
             action.set_rgb(color) # Send the color to the bulb
             angle = hue * 360  # Hue in degrees
             distance = saturation * radius
-            x = int(radius + distance * math.cos(math.radians(angle)))
-            y = int(radius + distance * math.sin(math.radians(angle)))
-            canvas.coords(marker,x - point_size, y - point_size, x + point_size, y + point_size)
+            move_white_point(canvas,marker,point_size,radius,angle,distance)
+            
+
+def update_rgb_values(red_var,green_var,blue_var,new_red, new_green, new_blue):
+    """Update the RGB input boxes with new values."""
+    red_var.set(new_red)
+    green_var.set(new_green)
+    blue_var.set(new_blue)
+
+
+def move_white_point(canvas,marker,point_size,radius,angle,distance):
+    x = int(radius + distance * math.cos(math.radians(angle)))
+    y = int(radius + distance * math.sin(math.radians(angle)))
+    canvas.coords(marker,x - point_size, y - point_size, x + point_size, y + point_size)
 
 
 

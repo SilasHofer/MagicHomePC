@@ -1,5 +1,7 @@
 from flux_led import WifiLedBulb
+from colorsys import rgb_to_hsv
 
+import help_funktions as help
 import shared_state
 
 # Function to turn on the light
@@ -45,6 +47,15 @@ def get_ip_of_selected_device(selected_device,devices):
             return device[1]  # Return the IP address of the selected device
     return None  # If no match is found, return None
 
-def change_device(selected_device, devices,*args):
+def change_device(selected_device, devices,canvas,marker,point_size,radius,red_input,green_input,blue_input):
     ip = get_ip_of_selected_device(selected_device,devices)
     shared_state.bulb = WifiLedBulb(ip)
+    color = get_color()
+    red, green, blue = [c / 255 for c in color]
+    hue, saturation, _ = rgb_to_hsv(red, green, blue)
+
+    # Convert HSV to position on the canvas
+    angle = hue * 360  # Hue in degrees
+    distance = saturation * radius
+    help.move_white_point(canvas,marker,point_size,radius,angle,distance)
+    help.update_rgb_values(red_input,green_input,blue_input,color[0], color[1], color[2])

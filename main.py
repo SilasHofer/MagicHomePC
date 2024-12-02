@@ -67,7 +67,7 @@ def open_window(icon):
         selected_device = tk.StringVar(window)
         selected_device.set(devices[0][0])  # Default value
 
-        selected_device.trace("w", lambda *args: action.change_device(selected_device, devices,shared_state.bulb))
+        selected_device.trace("w", lambda *args: action.change_device(selected_device, devices,canvas,marker,point_size,radius,red_var,green_var,blue_var))
 
         # Dropdown menu to select a device
         device_dropdown = tk.OptionMenu(frame, selected_device,  *[device[0] for device in devices])
@@ -135,16 +135,21 @@ def open_window(icon):
 
         color = action.get_color()
 
+        # Dedicated StringVar for each input box
+        red_var = tk.StringVar(value=color[0])
+        green_var = tk.StringVar(value=color[1])
+        blue_var = tk.StringVar(value=color[2])
+
         # Red Input Box
-        red_input = tk.Entry(frame_rgb, textvariable=tk.StringVar(value=color[0]), validate="key", validatecommand=(validate_command, "%P"), width=5)
+        red_input = tk.Entry(frame_rgb, textvariable=red_var, validate="key", validatecommand=(validate_command, "%P"), width=5)
         red_input.grid(row=2, column=0, padx=5)
 
         # Green Input Box
-        green_input = tk.Entry(frame_rgb, textvariable=tk.StringVar(value=color[1]), validate="key", validatecommand=(validate_command, "%P"), width=5)
+        green_input = tk.Entry(frame_rgb, textvariable=green_var, validate="key", validatecommand=(validate_command, "%P"), width=5)
         green_input.grid(row=2, column=1, padx=5)
 
         # Blue Input Box
-        blue_input = tk.Entry(frame_rgb, textvariable=tk.StringVar(value=color[2]), validate="key", validatecommand=(validate_command, "%P"), width=5)
+        blue_input = tk.Entry(frame_rgb, textvariable=blue_var, validate="key", validatecommand=(validate_command, "%P"), width=5)
         blue_input.grid(row=2, column=2, padx=5)
 
 
