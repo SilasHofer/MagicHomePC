@@ -10,6 +10,7 @@ from flux_led import WifiLedBulb
 import bulb_actions as action
 import shared_state
 import help_funktions as help
+import functools
 
 
 # Function to create the system tray icon
@@ -67,7 +68,7 @@ def open_window(icon):
         selected_device = tk.StringVar(window)
         selected_device.set(devices[0][0])  # Default value
 
-        selected_device.trace("w", lambda *args: action.change_device(selected_device, devices,canvas,marker,point_size,radius,red_var,green_var,blue_var))
+        selected_device.trace("w", lambda *args: action.change_device(selected_device, devices,canvas,marker,red_var,green_var,blue_var))
 
         # Dropdown menu to select a device
         device_dropdown = tk.OptionMenu(frame, selected_device,  *[device[0] for device in devices])
@@ -86,15 +87,15 @@ def open_window(icon):
         turn_on_button.grid(row=1, column=3, padx=5)
 
         # Create the canvas for the color wheel
-        canvas_size = 150
-        canvas = tk.Canvas(window, width=canvas_size, height=canvas_size, bg=window["bg"], highlightthickness=0)
+        
+        canvas = tk.Canvas(window, width=shared_state.canvas_size, height=shared_state.canvas_size, bg=window["bg"], highlightthickness=0)
         canvas.pack(pady=10)
 
         # Draw the color wheel
-        radius = canvas_size // 2
+        radius = shared_state.canvas_size // 2
     
-        for x in range(canvas_size):
-            for y in range(canvas_size):
+        for x in range(shared_state.canvas_size):
+            for y in range(shared_state.canvas_size):
                 dx = x - radius
                 dy = y - radius
                 distance = (dx**2 + dy**2)**0.5
@@ -107,7 +108,7 @@ def open_window(icon):
                     color = "#{:02x}{:02x}{:02x}".format(int(red * 255), int(green * 255), int(blue * 255))
                     canvas.create_line(x, y, x + 1, y, fill=color)  # Draw pixel
         
-            # Convert RGB to HSV
+        # Convert RGB to HSV
         red, green, blue = [c / 255 for c in action.get_color()]  # Normalize RGB to 0–1
         hue, saturation, _ = rgb_to_hsv(red, green, blue)
 
@@ -118,8 +119,7 @@ def open_window(icon):
         y = int(radius + distance * math.sin(math.radians(angle)))
 
         # Draw a white point
-        point_size = 3  # Size of the marker
-        marker = canvas.create_oval(x - point_size, y - point_size, x + point_size, y + point_size, fill="white", outline="black")
+        marker = canvas.create_oval(x - shared_state.point_size, y - shared_state.point_size, x + shared_state.point_size, y + shared_state.point_size, fill="white", outline="black")
 
 
 
@@ -140,6 +140,11 @@ def open_window(icon):
         green_var = tk.StringVar(value=color[1])
         blue_var = tk.StringVar(value=color[2])
 
+
+        red_var.trace_add("write", functools.partial(action.change_color, red_var=red_var, green_var=green_var, blue_var=blue_var,canvas=canvas,marker=marker))
+        green_var.trace_add("write", functools.partial(action.change_color, red_var=red_var, green_var=green_var, blue_var=blue_var,canvas=canvas,marker=marker))
+        blue_var.trace_add("write", functools.partial(action.change_color, red_var=red_var, green_var=green_var, blue_var=blue_var,canvas=canvas,marker=marker))
+
         # Red Input Box
         red_input = tk.Entry(frame_rgb, textvariable=red_var, validate="key", validatecommand=(validate_command, "%P"), width=5)
         red_input.grid(row=2, column=0, padx=5)
@@ -153,12 +158,24 @@ def open_window(icon):
         blue_input.grid(row=2, column=2, padx=5)
 
 
+                # Add a slider for brightness control
+        brightness_slider = tk.Scale(
+            window, 
+            from_=0, 
+            to=255, 
+            orient=tk.HORIZONTAL,  # Horizontal slider
+            label="Brightness (%)",  # Label for the slider
+            length=200,  # Length of the slider in pixels
+            command=lambda value: action.set_brightness(float(value))  # Call set_brightness on change
+        )
+        brightness_slider.set(50)  # Set initial brightness to 50%
+        brightness_slider.pack(pady=10)
         # Set brightness button
-        set_brightness_button = tk.Button(window, text="Set Brightness (50%)", command=lambda: action.set_brightness())
+        set_brightness_button = tk.Button(window, text="Set Brightness (50%)", command=lambda: action.get_brightness())
         set_brightness_button.pack(pady=10)
 
 
-        canvas.bind("<Button-1>", lambda event: help.on_color_select(event, radius, canvas,marker,point_size))
+        canvas.bind("<Button-1>", lambda event: help.on_color_select(event,canvas,marker,red_var,green_var,blue_var))
 
         # Quit button for the window
         quit_button = tk.Button(window, text="Quit", command=lambda: quit_action(icon))

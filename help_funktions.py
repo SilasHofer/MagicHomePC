@@ -1,10 +1,11 @@
 import math
 import shared_state
 import bulb_actions as action
-from colorsys import hsv_to_rgb
+from colorsys import hsv_to_rgb, rgb_to_hsv
 
 # Handle user click on the color wheel
-def on_color_select(event,radius,canvas,marker,point_size):
+def on_color_select(event,canvas,marker,red_input,green_input,blue_input):
+    radius = shared_state.canvas_size // 2
     dx = event.x - radius
     dy = event.y - radius
     distance = (dx**2 + dy**2)**0.5
@@ -16,19 +17,31 @@ def on_color_select(event,radius,canvas,marker,point_size):
         color = (int(red * 255), int(green * 255), int(blue * 255))
         if shared_state.bulb:
             action.set_rgb(color) # Send the color to the bulb
-            angle = hue * 360  # Hue in degrees
-            distance = saturation * radius
-            move_white_point(canvas,marker,point_size,radius,angle,distance)
+            move_white_point(canvas,marker)
+            update_rgb_values(red_input,green_input,blue_input,color[0], color[1], color[2])
             
 
 def update_rgb_values(red_var,green_var,blue_var,new_red, new_green, new_blue):
     """Update the RGB input boxes with new values."""
+    shared_state.system_change = True
     red_var.set(new_red)
+    shared_state.system_change = True
     green_var.set(new_green)
+    shared_state.system_change = True
     blue_var.set(new_blue)
 
 
-def move_white_point(canvas,marker,point_size,radius,angle,distance):
+
+def move_white_point(canvas,marker):
+        # Convert RGB to HSV
+    point_size = shared_state.point_size
+    radius = shared_state.canvas_size // 2
+    red, green, blue = [c / 255 for c in action.get_color()]  # Normalize RGB to 0–1
+    hue, saturation, _ = rgb_to_hsv(red, green, blue)
+
+    # Convert HSV to position on the canvas
+    angle = hue * 360  # Hue in degrees
+    distance = saturation * radius
     x = int(radius + distance * math.cos(math.radians(angle)))
     y = int(radius + distance * math.sin(math.radians(angle)))
     canvas.coords(marker,x - point_size, y - point_size, x + point_size, y + point_size)
