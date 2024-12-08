@@ -32,7 +32,6 @@ def quit_action(icon):
 
 # Function to open the Tkinter window for light control
 def open_window(icon):
-    shared_state.bulb = WifiLedBulb("192.168.0.48")
     # Check if the window is already open
     if not hasattr(open_window, "window_opened") or not open_window.window_opened:
         open_window.window_opened = True
@@ -55,7 +54,6 @@ def open_window(icon):
 
         # Set the window size and position
         window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
-
 
         frame = tk.Frame(window)
         frame.pack(pady=5)
@@ -87,7 +85,6 @@ def open_window(icon):
         turn_on_button.grid(row=1, column=3, padx=5)
 
         # Create the canvas for the color wheel
-        
         canvas = tk.Canvas(window, width=shared_state.canvas_size, height=shared_state.canvas_size, bg=window["bg"], highlightthickness=0)
         canvas.pack(pady=10)
 
@@ -120,8 +117,6 @@ def open_window(icon):
 
         # Draw a white point
         marker = canvas.create_oval(x - shared_state.point_size, y - shared_state.point_size, x + shared_state.point_size, y + shared_state.point_size, fill="white", outline="black")
-
-
 
         # Create a frame to hold the RGB input boxes on one line
         frame_rgb = tk.Frame(window)
@@ -158,7 +153,7 @@ def open_window(icon):
         blue_input.grid(row=2, column=2, padx=5)
 
 
-                # Add a slider for brightness control
+        # Add a slider for brightness control
         brightness_slider = tk.Scale(
             window, 
             from_=0, 
@@ -168,7 +163,7 @@ def open_window(icon):
             length=200,  # Length of the slider in pixels
             command=lambda value: action.set_brightness(float(value))  # Call set_brightness on change
         )
-        brightness_slider.set(50)  # Set initial brightness to 50%
+        brightness_slider.set(255)  # Set initial brightness to 50%
         brightness_slider.pack(pady=10)
         # Set brightness button
         set_brightness_button = tk.Button(window, text="Set Brightness (50%)", command=lambda: action.get_brightness())

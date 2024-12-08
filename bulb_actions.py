@@ -28,10 +28,16 @@ def set_rgb(color):
     shared_state.bulb.setRgb(color[0],color[1],color[2])
 
 def set_brightness(brightness):
-    color = shared_state.bulb.getRgbw()
-    shared_state.bulb.setRgb(color[0],color[1],color[2],color[3],brightness)
+    if(shared_state.bulb.raw_state.warm_white !=0):
+        shared_state.bulb.setWarmWhite255(brightness)
+    else:
+        color = shared_state.bulb.getRgbw()
+        shared_state.bulb.setRgb(color[0],color[1],color[2],color[3],brightness)
+
 
 def get_brightness():
+    print(shared_state.bulb.raw_state)
+    shared_state.bulb.setWarmWhite255(30)
     print(shared_state.bulb.raw_state)
 
 def get_status():
