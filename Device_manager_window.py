@@ -1,10 +1,10 @@
 import csv_controller
 import tkinter as tk
+from tkinter import ttk
 from flux_led import WifiLedBulb
-import sys
 def open_add_device_window(icon, callback=None):
     # Check if the window is already open
-    if not hasattr(open_add_device_window, "window_opened") or not open_add_device_window.window_opened(icon):
+    if not hasattr(open_add_device_window, "window_opened") or not open_add_device_window.window_opened:
         open_add_device_window.window_opened = True
             # Create the Tkinter window
         window = tk.Tk()
@@ -15,15 +15,10 @@ def open_add_device_window(icon, callback=None):
 
         # Set the window size
         window_width = 300
-        window_height = 150
-
-        # Calculate the position to open the window above the mouse
-        # This will place the window slightly above the cursor
-        x_position = x - (window_width // 2)  # Center the window over the cursor
-        y_position = y - window_height - 10  # Position it above the mouse, with some padding
+        window_height = 350
 
         # Set the window size and position
-        window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
+        window.geometry(f"{window_width}x{window_height}+{x}+{y}")
 
         frame = tk.Frame(window)
         frame.pack(pady=5)
@@ -46,7 +41,7 @@ def open_add_device_window(icon, callback=None):
 
         # Quit button for the window
         quit_button = tk.Button(frame, text="Close", command=lambda: on_close())
-        quit_button.grid(row=5, column=1, padx=5,pady=5)
+        quit_button.grid(row=7, column=1, padx=5,pady=5)
 
         # Check Connection button for the window
         Save = tk.Button(frame, text="Save", command=lambda: save_device(name,ip))
@@ -54,11 +49,51 @@ def open_add_device_window(icon, callback=None):
 
         # Add the label to display messages
         message_label = tk.Label(frame, text="", fg="black")
-        message_label.grid(row=6, column=1, columnspan=2, pady=5)
+        message_label.grid(row=5, column=1, columnspan=2, pady=5)
+
+        def update_device_list():
+            # Get the devices from the CSV and update the Treeview
+            devices = csv_controller.read_from_csv()
+            for row in tree.get_children():
+                tree.delete(row)  # Clear previous rows
+            for device in devices:
+                tree.insert("", "end", values=(device[0], device[1], "DELETE"))
+
+       # Add a Treeview (table-like) to display devices
+        tree = ttk.Treeview(frame, columns=("Name", "IP","Action"), show="headings", height=5)
+        tree.grid(row=6, column=0, columnspan=3,padx=5, pady=5)
+
+        # Define columns for the Treeview (table)
+        tree.heading("Name", text="Name")
+        tree.heading("IP", text="IP")
+        tree.heading("Action", text="Action")
+
+        tree.column("Name", width=75)
+        tree.column("IP", width=75)
+        tree.column("Action", width=50)
+
+        update_device_list()
+
+
+        # Bind button to "Actions" column in each row
+        def on_item_click(event):
+            region = tree.identify("region", event.x, event.y)
+            if region == "cell":
+                col = tree.identify_column(event.x)
+                row_id = tree.identify_row(event.y)
+                if col == "#3":  # This is the "Actions" column
+                    device_ip = tree.item(row_id)['values'][1]  # Get the IP of the clicked row
+                    if csv_controller.remove_from_csv(device_ip):
+                        update_device_list()
+
+        # Bind click event to the treeview
+        tree.bind("<ButtonRelease-1>", on_item_click)
 
         def save_device(name,ip):
-            csv_controller.save_to_csv(name.get(),ip.get())
-            message_label.config(text="Device Saved", fg="green")
+            if csv_controller.save_to_csv(name.get(),ip.get()):
+                update_device_list()
+                message_label.config(text="Device Saved", fg="green")
+            
 
         def try_to_connect(ip):
             try:
@@ -67,7 +102,7 @@ def open_add_device_window(icon, callback=None):
                 message_label.config(text="Connection Failed", fg="red")
                 return
             except Exception as e:
-                message_label.config(text="Connection Failed: Invalid IP", fg="red")
+                message_label.config(text="Connection Failed", fg="red")
                 return
             message_label.config(text="Connection Successful", fg="green")
         

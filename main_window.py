@@ -7,7 +7,7 @@ import math
 from colorsys import hsv_to_rgb, rgb_to_hsv
 import functools
 import sys
-import add_window
+import Device_manager_window
 import csv_controller
 
 
@@ -17,12 +17,11 @@ def open_window(icon):
     isConected = True
     try:
         shared_state.bulb = WifiLedBulb(csv_controller.read_from_csv()[0][1])
-
     except Exception as e:
         isConected = False
     
     # Check if the window is already open
-    if not hasattr(open_window, "window_opened") or not open_window.window_opened(icon):
+    if not hasattr(open_window, "window_opened") or not open_window.window_opened:
         open_window.window_opened = True
 
         # Create the Tkinter window
@@ -34,12 +33,12 @@ def open_window(icon):
 
         # Set the window size
         window_width = 300
-        window_height = 400
+        window_height = 475
 
         # Calculate the position to open the window above the mouse
         # This will place the window slightly above the cursor
         x_position = x - (window_width // 2)  # Center the window over the cursor
-        y_position = y - window_height - 10  # Position it above the mouse, with some padding
+        y_position = y - window_height - 30  # Position it above the mouse, with some padding
 
         # Set the window size and position
         window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")
@@ -47,14 +46,14 @@ def open_window(icon):
         frame = tk.Frame(window)
         frame.pack(pady=5)
 
-                # Initialize device_dropdown (default to an empty menu)
+            # Initialize device_dropdown (default to an empty menu)
         selected_device = tk.StringVar(window)
         selected_device.set("")  # Default value if no devices are connected
+        selected_device_old = ""
         device_dropdown = tk.OptionMenu(frame, selected_device, "")
         device_dropdown.grid(row=0, column=2, padx=5, pady=10)
 
         def update_dropdown():
-            isConected = True
             # Refresh the dropdown menu with updated devices
             new_devices = csv_controller.read_from_csv()
             menu = device_dropdown["menu"]
@@ -65,33 +64,35 @@ def open_window(icon):
                     command=tk._setit(selected_device, device[0])
                 )
             selected_device.set(new_devices[0][0])
+            return new_devices[0][0]
 
         # Add device
-        Add_device = tk.Button(frame, text="Add Device", command=lambda: add_window.open_add_device_window(icon,update_dropdown))
+        Add_device = tk.Button(frame, text="Device manager", command=lambda: Device_manager_window.open_add_device_window(icon,update_dropdown))
         Add_device.grid(row=0, column=1, padx=5)
         
         if(isConected == True):
 
-            update_dropdown()
-
-
-            selected_device.trace("w", lambda *args: action.change_device(selected_device, csv_controller.read_from_csv(),canvas,marker,red_var,green_var,blue_var))
+            selected_device_old = update_dropdown()
+            
+            selected_device.trace("w", lambda *args: action.change_device(selected_device,selected_device_old, csv_controller.read_from_csv(),canvas,marker,red_var,green_var,blue_var,message_label))
 
             # Dropdown menu to select a device
             device_dropdown = tk.OptionMenu(frame, selected_device,  *[device[0] for device in csv_controller.read_from_csv()])
             device_dropdown.grid(row=0, column=2, padx=5,pady=10)
-
+            # Add the label to display messages
+            message_label = tk.Label(frame, text="", fg="black")
+            message_label.grid(row=1, column=1, columnspan=2, pady=5)
             # Toggle on/off button
             turn_on_button = tk.Button(frame, text="Toggle on/off", command=lambda: action.Toggle_bulb())
-            turn_on_button.grid(row=1, column=1, padx=5)
+            turn_on_button.grid(row=2, column=1, padx=5)
 
             # turn On all button
             turn_on_button = tk.Button(frame, text="turn On all", command=lambda: action.turn_on_all_bulbs(csv_controller.read_from_csv()))
-            turn_on_button.grid(row=1, column=2, padx=5)
+            turn_on_button.grid(row=2, column=2, padx=5)
 
             # turn off all button
             turn_on_button = tk.Button(frame, text="turn off all", command=lambda: action.turn_off_all_bulbs(csv_controller.read_from_csv()))
-            turn_on_button.grid(row=1, column=3, padx=5)
+            turn_on_button.grid(row=2, column=3, padx=5)
 
             # Create the canvas for the color wheel
             canvas = tk.Canvas(window, width=shared_state.canvas_size, height=shared_state.canvas_size, bg=window["bg"], highlightthickness=0)
@@ -165,9 +166,9 @@ def open_window(icon):
 
             # Add a slider for brightness control
             brightness_slider = tk.Scale(
-                window, 
-                from_=1, 
-                to=100, 
+                window,
+                from_=1,
+                to=100,
                 orient=tk.HORIZONTAL,  # Horizontal slider
                 label="Brightness (%)",  # Label for the slider
                 length=200,  # Length of the slider in pixels

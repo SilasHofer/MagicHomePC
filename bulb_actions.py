@@ -90,10 +90,18 @@ def get_ip_of_selected_device(selected_device,devices):
             return device[1]  # Return the IP address of the selected device
     return None  # If no match is found, return None
 
-def change_device(selected_device,devices,canvas,marker,red_input,green_input,blue_input):
+def change_device(selected_device,selected_device_old,devices,canvas,marker,red_input,green_input,blue_input,message_label):
     ip = get_ip_of_selected_device(selected_device,devices)
-    shared_state.bulb = WifiLedBulb(ip)
+    try:
+        shared_state.bulb = WifiLedBulb(ip)
+    except Exception as e:
+        message_label.config(text="no connection", fg="red")
+        selected_device.set(selected_device_old)
+        return
+
     color = get_color()
 
     help.move_white_point(canvas,marker)
     help.update_rgb_values(red_input,green_input,blue_input,color[0], color[1], color[2])
+    message_label.config(text="", fg="red")
+    selected_device_old = selected_device.get()
