@@ -1,5 +1,7 @@
 from flux_led import WifiLedBulb
 from colorsys import rgb_to_hsv
+import numpy as np
+import math
 
 import help_funktions as help
 import shared_state
@@ -28,17 +30,36 @@ def set_rgb(color):
     shared_state.bulb.setRgb(color[0],color[1],color[2])
 
 def set_brightness(brightness):
-    if(shared_state.bulb.raw_state.warm_white !=0):
-        shared_state.bulb.setWarmWhite255(brightness)
-    else:
-        color = shared_state.bulb.getRgbw()
-        shared_state.bulb.setRgb(color[0],color[1],color[2],color[3],brightness)
+
+    brightness = brightness/100
+
+    color = shared_state.bulb.getRgb()
+    color_array = np.array(color)
+    max = color_array.max()
+
+
+    multpilicator =  255/max
+
+    red = math.ceil(color[0]*multpilicator*brightness)
+    blue = math.ceil(color[1]*multpilicator*brightness)
+    green = math.ceil(color[2]*multpilicator*brightness)
+
+    if(red == 256):
+        red = 255
+    if(blue == 256):
+        blue = 255
+    if(green == 256):
+        green = 255
+
+    shared_state.bulb.setRgb(red,blue,green)
+
 
 
 def get_brightness():
-    print(shared_state.bulb.raw_state)
-    shared_state.bulb.setWarmWhite255(30)
-    print(shared_state.bulb.raw_state)
+    color = shared_state.bulb.getRgb()
+    color_array = np.array(color)
+    max = color_array.max()
+    return max/255
 
 def get_status():
     return shared_state.bulb.is_on

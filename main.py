@@ -32,6 +32,11 @@ def quit_action(icon):
 
 # Function to open the Tkinter window for light control
 def open_window(icon):
+    devices = [
+        ("Tisch", "192.168.0.52"),
+        ("Lampe", "192.168.0.58"),
+    ]
+    shared_state.bulb = WifiLedBulb(devices[0][1])
     # Check if the window is already open
     if not hasattr(open_window, "window_opened") or not open_window.window_opened:
         open_window.window_opened = True
@@ -58,11 +63,6 @@ def open_window(icon):
         frame = tk.Frame(window)
         frame.pack(pady=5)
 
-        # List of devices (bulbs) to choose from in the dropdown
-        devices = [
-            ("Lampe", "192.168.0.48"),
-            ("Tisch", "192.168.0.42"),
-        ]  # You can replace this with your actual bulbs
         selected_device = tk.StringVar(window)
         selected_device.set(devices[0][0])  # Default value
 
@@ -152,22 +152,21 @@ def open_window(icon):
         blue_input = tk.Entry(frame_rgb, textvariable=blue_var, validate="key", validatecommand=(validate_command, "%P"), width=5)
         blue_input.grid(row=2, column=2, padx=5)
 
+        initial_brightness = tk.DoubleVar(value=action.get_brightness() * 100)
 
         # Add a slider for brightness control
         brightness_slider = tk.Scale(
             window, 
-            from_=0, 
-            to=255, 
+            from_=1, 
+            to=100, 
             orient=tk.HORIZONTAL,  # Horizontal slider
             label="Brightness (%)",  # Label for the slider
             length=200,  # Length of the slider in pixels
+            variable=initial_brightness,
             command=lambda value: action.set_brightness(float(value))  # Call set_brightness on change
         )
-        brightness_slider.set(255)  # Set initial brightness to 50%
+
         brightness_slider.pack(pady=10)
-        # Set brightness button
-        set_brightness_button = tk.Button(window, text="Set Brightness (50%)", command=lambda: action.get_brightness())
-        set_brightness_button.pack(pady=10)
 
 
         canvas.bind("<Button-1>", lambda event: help.on_color_select(event,canvas,marker,red_var,green_var,blue_var))

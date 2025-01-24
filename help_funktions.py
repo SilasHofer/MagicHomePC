@@ -48,6 +48,7 @@ def move_white_point(canvas,marker):
 
 
 
+
         # Function to validate the input (only allow digits and limit the length to 3 digits)
 def validate_rgb_input(P):
     # Allow empty input (to delete the current value)
