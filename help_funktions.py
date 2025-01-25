@@ -62,7 +62,10 @@ def try_to_connect(ip,message_label):
 
 def update_device_list(tree):
     # Get the devices from the CSV and update the Treeview
-    devices = csv_controller.read_from_csv()
+    try:
+        devices = csv_controller.read_from_csv()
+    except Exception as e:
+        return
     for row in tree.get_children():
         tree.delete(row)  # Clear previous rows
     for device in devices:
@@ -70,10 +73,10 @@ def update_device_list(tree):
 
 
 
-def save_device(name,ip,message_label):
+def save_device(name,ip,message_label,tree):
     if try_to_connect(ip.get(),message_label):
         if csv_controller.save_to_csv(name.get(),ip.get()):
-            update_device_list()
+            update_device_list(tree)
             message_label.config(text="Device Saved", fg="green")
 
         # Function to validate the input (only allow digits and limit the length to 3 digits)

@@ -44,7 +44,7 @@ def open_add_device_window(icon, callback=None):
         quit_button.grid(row=7, column=1, padx=5,pady=5)
 
         # Check Connection button for the window
-        Save = tk.Button(frame, text="Save", command=lambda: help_funktions.save_device(name,ip,message_label))
+        Save = tk.Button(frame, text="Save", command=lambda: help_funktions.save_device(name,ip,message_label,tree))
         Save.grid(row=5, column=2, padx=5, pady=5)
 
         # Add the label to display messages

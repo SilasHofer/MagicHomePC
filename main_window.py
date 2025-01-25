@@ -14,11 +14,10 @@ import csv_controller
 
 # Function to open the Tkinter window for light control
 def open_window(icon):
-    isConected = True
     try:
         shared_state.bulb = WifiLedBulb(csv_controller.read_from_csv()[0][1])
     except Exception as e:
-        isConected = False
+        shared_state.isConected = False
     
     # Check if the window is already open
     if not hasattr(open_window, "window_opened") or not open_window.window_opened:
@@ -53,6 +52,9 @@ def open_window(icon):
         device_dropdown = tk.OptionMenu(frame, selected_device, "")
         device_dropdown.grid(row=0, column=2, padx=5, pady=10)
 
+        frame_inside = tk.Frame(window)
+        frame_inside.pack(pady=5)
+
         def update_dropdown():
             # Refresh the dropdown menu with updated devices
             new_devices = csv_controller.read_from_csv()
@@ -63,35 +65,41 @@ def open_window(icon):
                     label=device[0],
                     command=tk._setit(selected_device, device[0])
                 )
-            selected_device.set(new_devices[0][0])
+            try:
+                selected_device.set(new_devices[0][0])
+                shared_state.isConected = True
+            except Exception as e:
+                shared_state.isConected = False
+                frame_inside.pack_forget()
+                return
             return new_devices[0][0]
 
         # Add device
         Add_device = tk.Button(frame, text="Device manager", command=lambda: Device_manager_window.open_add_device_window(icon,update_dropdown))
         Add_device.grid(row=0, column=1, padx=5)
-        
-        if(isConected == True):
 
-            selected_device_old = update_dropdown()
-            
+        selected_device_old = update_dropdown()
+        
+        if(shared_state.isConected == True):
+
             selected_device.trace("w", lambda *args: action.change_device(selected_device,selected_device_old, csv_controller.read_from_csv(),canvas,marker,red_var,green_var,blue_var,message_label))
 
             # Dropdown menu to select a device
-            device_dropdown = tk.OptionMenu(frame, selected_device,  *[device[0] for device in csv_controller.read_from_csv()])
+            device_dropdown = tk.OptionMenu(frame_inside, selected_device,  *[device[0] for device in csv_controller.read_from_csv()])
             device_dropdown.grid(row=0, column=2, padx=5,pady=10)
             # Add the label to display messages
-            message_label = tk.Label(frame, text="", fg="black")
+            message_label = tk.Label(frame_inside, text="", fg="black")
             message_label.grid(row=1, column=1, columnspan=2, pady=5)
             # Toggle on/off button
-            turn_on_button = tk.Button(frame, text="Toggle on/off", command=lambda: action.Toggle_bulb())
+            turn_on_button = tk.Button(frame_inside, text="Toggle on/off", command=lambda: action.Toggle_bulb())
             turn_on_button.grid(row=2, column=1, padx=5)
 
             # turn On all button
-            turn_on_button = tk.Button(frame, text="turn On all", command=lambda: action.turn_on_all_bulbs(csv_controller.read_from_csv()))
+            turn_on_button = tk.Button(frame_inside, text="turn On all", command=lambda: action.turn_on_all_bulbs(csv_controller.read_from_csv()))
             turn_on_button.grid(row=2, column=2, padx=5)
 
             # turn off all button
-            turn_on_button = tk.Button(frame, text="turn off all", command=lambda: action.turn_off_all_bulbs(csv_controller.read_from_csv()))
+            turn_on_button = tk.Button(frame_inside, text="turn off all", command=lambda: action.turn_off_all_bulbs(csv_controller.read_from_csv()))
             turn_on_button.grid(row=2, column=3, padx=5)
 
             # Create the canvas for the color wheel
@@ -128,7 +136,7 @@ def open_window(icon):
             # Draw a white point
             marker = canvas.create_oval(x - shared_state.point_size, y - shared_state.point_size, x + shared_state.point_size, y + shared_state.point_size, fill="white", outline="black")
 
-            # Create a frame to hold the RGB input boxes on one line
+            # Create a frame_inside to hold the RGB input boxes on one line
             frame_rgb = tk.Frame(window)
             frame_rgb.pack(pady=5)
 
