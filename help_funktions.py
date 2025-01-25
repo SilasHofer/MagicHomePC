@@ -2,6 +2,8 @@ import math
 import shared_state
 import bulb_actions as action
 from colorsys import hsv_to_rgb, rgb_to_hsv
+from flux_led import WifiLedBulb
+import csv_controller
 
 # Handle user click on the color wheel
 def on_color_select(event,canvas,marker,red_input,green_input,blue_input):
@@ -31,7 +33,6 @@ def update_rgb_values(red_var,green_var,blue_var,new_red, new_green, new_blue):
     blue_var.set(new_blue)
 
 
-
 def move_white_point(canvas,marker):
         # Convert RGB to HSV
     point_size = shared_state.point_size
@@ -47,7 +48,33 @@ def move_white_point(canvas,marker):
     canvas.coords(marker,x - point_size, y - point_size, x + point_size, y + point_size)
 
 
+def try_to_connect(ip,message_label):
+    try:
+        WifiLedBulb(ip)
+    except ConnectionRefusedError as e:
+        message_label.config(text="Connection Failed", fg="red")
+        return False
+    except Exception as e:
+        message_label.config(text="Connection Failed", fg="red")
+        return False
+    message_label.config(text="Connection Successful", fg="green")
+    return True
 
+def update_device_list(tree):
+    # Get the devices from the CSV and update the Treeview
+    devices = csv_controller.read_from_csv()
+    for row in tree.get_children():
+        tree.delete(row)  # Clear previous rows
+    for device in devices:
+        tree.insert("", "end", values=(device[0], device[1], "DELETE"))
+
+
+
+def save_device(name,ip,message_label):
+    if try_to_connect(ip.get(),message_label):
+        if csv_controller.save_to_csv(name.get(),ip.get()):
+            update_device_list()
+            message_label.config(text="Device Saved", fg="green")
 
         # Function to validate the input (only allow digits and limit the length to 3 digits)
 def validate_rgb_input(P):

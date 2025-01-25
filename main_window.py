@@ -38,7 +38,7 @@ def open_window(icon):
         # Calculate the position to open the window above the mouse
         # This will place the window slightly above the cursor
         x_position = x - (window_width // 2)  # Center the window over the cursor
-        y_position = y - window_height - 30  # Position it above the mouse, with some padding
+        y_position = y - window_height -5  # Position it above the mouse, with some padding
 
         # Set the window size and position
         window.geometry(f"{window_width}x{window_height}+{x_position}+{y_position}")

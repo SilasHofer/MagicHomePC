@@ -1,14 +1,14 @@
 import csv_controller
 import tkinter as tk
 from tkinter import ttk
-from flux_led import WifiLedBulb
+import help_funktions
 def open_add_device_window(icon, callback=None):
     # Check if the window is already open
     if not hasattr(open_add_device_window, "window_opened") or not open_add_device_window.window_opened:
         open_add_device_window.window_opened = True
             # Create the Tkinter window
         window = tk.Tk()
-        window.title("Magic Home Control")
+        window.title("Device manager")
 
         # Get the current position of the mouse
         x, y = window.winfo_pointerxy()
@@ -36,7 +36,7 @@ def open_add_device_window(icon, callback=None):
         tk.Label(frame, text="IP:").grid(row=2, column=1, padx=5)
 
         # Check Connection button for the window
-        Check_Connection = tk.Button(frame, text="Check", command=lambda: try_to_connect(ip.get()))
+        Check_Connection = tk.Button(frame, text="Check", command=lambda: help_funktions.try_to_connect(ip.get(),message_label))
         Check_Connection.grid(row=5, column=0, padx=5,pady=5)
 
         # Quit button for the window
@@ -44,20 +44,12 @@ def open_add_device_window(icon, callback=None):
         quit_button.grid(row=7, column=1, padx=5,pady=5)
 
         # Check Connection button for the window
-        Save = tk.Button(frame, text="Save", command=lambda: save_device(name,ip))
+        Save = tk.Button(frame, text="Save", command=lambda: help_funktions.save_device(name,ip,message_label))
         Save.grid(row=5, column=2, padx=5, pady=5)
 
         # Add the label to display messages
         message_label = tk.Label(frame, text="", fg="black")
         message_label.grid(row=5, column=1, columnspan=2, pady=5)
-
-        def update_device_list():
-            # Get the devices from the CSV and update the Treeview
-            devices = csv_controller.read_from_csv()
-            for row in tree.get_children():
-                tree.delete(row)  # Clear previous rows
-            for device in devices:
-                tree.insert("", "end", values=(device[0], device[1], "DELETE"))
 
        # Add a Treeview (table-like) to display devices
         tree = ttk.Treeview(frame, columns=("Name", "IP","Action"), show="headings", height=5)
@@ -72,7 +64,7 @@ def open_add_device_window(icon, callback=None):
         tree.column("IP", width=75)
         tree.column("Action", width=50)
 
-        update_device_list()
+        help_funktions.update_device_list(tree)
 
 
         # Bind button to "Actions" column in each row
@@ -84,28 +76,11 @@ def open_add_device_window(icon, callback=None):
                 if col == "#3":  # This is the "Actions" column
                     device_ip = tree.item(row_id)['values'][1]  # Get the IP of the clicked row
                     if csv_controller.remove_from_csv(device_ip):
-                        update_device_list()
+                        help_funktions.update_device_list(tree)
 
         # Bind click event to the treeview
         tree.bind("<ButtonRelease-1>", on_item_click)
 
-        def save_device(name,ip):
-            if csv_controller.save_to_csv(name.get(),ip.get()):
-                update_device_list()
-                message_label.config(text="Device Saved", fg="green")
-            
-
-        def try_to_connect(ip):
-            try:
-                WifiLedBulb(ip)
-            except ConnectionRefusedError as e:
-                message_label.config(text="Connection Failed", fg="red")
-                return
-            except Exception as e:
-                message_label.config(text="Connection Failed", fg="red")
-                return
-            message_label.config(text="Connection Successful", fg="green")
-        
 
         # Handle window close event
         def on_close():
