@@ -33,7 +33,7 @@ A Python-based GUI application to control smart WiFi LED bulbs using the `flux_l
 - **Adding a Device:** Open the device manager and enter the bulb's name and IP address.
 - **Turning Lights On/Off:** Click the system tray icon or use the GUI window.
 - **Changing Colors:** Use the GUI color wheel to set RGB values.
-- **Adjusting Brightness:** Modify brightness levels with the slider.
+- **Adjusting Brightness:** Modify brightness levels with the slider. (does only work for device with only rgb no rgbw)
 
 ## File Structure
 ```
@@ -52,7 +52,6 @@ Magic-Home-Control/
 ```
 
 ## Future Improvements
-- [ ] Add support for scheduling lights
 - [ ] Enhance UI for better user experience
 - [ ] Implement more smart home integrations
 
