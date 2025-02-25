@@ -4,6 +4,8 @@ import bulb_actions as action
 from colorsys import hsv_to_rgb, rgb_to_hsv
 from flux_led import WifiLedBulb
 import csv_controller
+from color_controller import apply_color_change
+import logging
 
 # Handle user click on the color wheel
 def on_color_select(event,canvas,marker,red_input,green_input,blue_input):
@@ -18,9 +20,9 @@ def on_color_select(event,canvas,marker,red_input,green_input,blue_input):
         red, green, blue = hsv_to_rgb(hue, saturation, 1)
         color = (int(red * 255), int(green * 255), int(blue * 255))
         if shared_state.bulb:
-            action.set_rgb(color) # Send the color to the bulb
-            move_white_point(canvas,marker)
-            update_rgb_values(red_input,green_input,blue_input,color[0], color[1], color[2])
+            apply_color_change(color,canvas,marker,red_input,green_input,blue_input)
+            logging.info(f"User selected color: {color}") 
+
             
 
 def update_rgb_values(red_var,green_var,blue_var,new_red, new_green, new_blue):
@@ -50,22 +52,30 @@ def move_white_point(canvas,marker):
 
 def try_to_connect(ip,message_label):
     try:
-        WifiLedBulb(ip)
+        bulb = WifiLedBulb(ip)
+        if bulb.is_on:  # Check if the bulb is responding
+            message_label.config(text="Connection Successful", fg="green")
+            return True
+        else:
+            message_label.config(text="Bulb found but not responding", fg="orange")
+            return False
     except ConnectionRefusedError as e:
-        message_label.config(text="Connection Failed", fg="red")
-        return False
+        message_label.config(text="Network Error", fg="red")
+        logging.error(f"Connection Refused for IP: {ip}")
     except Exception as e:
-        message_label.config(text="Connection Failed", fg="red")
-        return False
-    message_label.config(text="Connection Successful", fg="green")
-    return True
+        message_label.config(text="Unexpected Error", fg="red")
+        logging.error(f"Unexpected error when connecting to {ip}: {e}")
+    return False
+
 
 def update_device_list(tree):
     # Get the devices from the CSV and update the Treeview
     try:
         devices = csv_controller.read_from_csv()
     except Exception as e:
+        logging.error(f"Failed to read devices: {e}")
         return
+    
     for row in tree.get_children():
         tree.delete(row)  # Clear previous rows
     for device in devices:
@@ -78,6 +88,10 @@ def save_device(name,ip,message_label,tree):
         if csv_controller.save_to_csv(name.get(),ip.get()):
             update_device_list(tree)
             message_label.config(text="Device Saved", fg="green")
+            logging.info(f"Device {name.get()} ({ip.get()}) saved successfully.")
+            return True
+    logging.error(f"Failed to save device {name.get()} ({ip.get()}).")
+    return False
 
         # Function to validate the input (only allow digits and limit the length to 3 digits)
 def validate_rgb_input(P):

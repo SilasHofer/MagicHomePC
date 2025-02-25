@@ -1,7 +1,7 @@
 import csv_controller
 import tkinter as tk
 from tkinter import ttk
-import help_funktions
+import ui_helpers
 def open_add_device_window(icon, callback=None):
     # Check if the window is already open
     if not hasattr(open_add_device_window, "window_opened") or not open_add_device_window.window_opened:
@@ -36,7 +36,7 @@ def open_add_device_window(icon, callback=None):
         tk.Label(frame, text="IP:").grid(row=2, column=1, padx=5)
 
         # Check Connection button for the window
-        Check_Connection = tk.Button(frame, text="Check", command=lambda: help_funktions.try_to_connect(ip.get(),message_label))
+        Check_Connection = tk.Button(frame, text="Check", command=lambda: ui_helpers.try_to_connect(ip.get(),message_label))
         Check_Connection.grid(row=5, column=0, padx=5,pady=5)
 
         # Quit button for the window
@@ -44,7 +44,7 @@ def open_add_device_window(icon, callback=None):
         quit_button.grid(row=7, column=1, padx=5,pady=5)
 
         # Check Connection button for the window
-        Save = tk.Button(frame, text="Save", command=lambda: help_funktions.save_device(name,ip,message_label,tree))
+        Save = tk.Button(frame, text="Save", command=lambda: ui_helpers.save_device(name,ip,message_label,tree))
         Save.grid(row=5, column=2, padx=5, pady=5)
 
         # Add the label to display messages
@@ -64,7 +64,7 @@ def open_add_device_window(icon, callback=None):
         tree.column("IP", width=75)
         tree.column("Action", width=50)
 
-        help_funktions.update_device_list(tree)
+        ui_helpers.update_device_list(tree)
 
 
         # Bind button to "Actions" column in each row
@@ -76,7 +76,7 @@ def open_add_device_window(icon, callback=None):
                 if col == "#3":  # This is the "Actions" column
                     device_ip = tree.item(row_id)['values'][1]  # Get the IP of the clicked row
                     if csv_controller.remove_from_csv(device_ip):
-                        help_funktions.update_device_list(tree)
+                        ui_helpers.update_device_list(tree)
 
         # Bind click event to the treeview
         tree.bind("<ButtonRelease-1>", on_item_click)

@@ -3,7 +3,7 @@ from colorsys import rgb_to_hsv
 import numpy as np
 import math
 
-import help_funktions as help
+import ui_helpers as help
 import shared_state
 
 # Function to turn on the light

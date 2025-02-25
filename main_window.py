@@ -2,7 +2,7 @@ import shared_state
 from flux_led import WifiLedBulb
 import tkinter as tk
 import bulb_actions as action
-import help_funktions as help
+import ui_helpers as help
 import math
 from colorsys import hsv_to_rgb, rgb_to_hsv
 import functools
