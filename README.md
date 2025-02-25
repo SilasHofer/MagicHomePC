@@ -39,12 +39,13 @@ A Python-based GUI application to control smart WiFi LED bulbs using the `flux_l
 ```
 Magic-Home-Control/
 │── main.py                 # Entry point for the application
-│── main_window.py           # GUI for light control
-│── Device_manager_window.py # GUI for managing connected bulbs
+│── mainWindow.py           # GUI for light control
+│── DeviceManager.py        # GUI for managing connected bulbs
 │── bulb_actions.py          # Functions for controlling bulb states
 │── csv_controller.py        # Handles reading/writing device information
-│── help_funktions.py        # Helper functions for UI and logic
+│── ui_helpers.py            # Helper functions for UI
 │── shared_state.py          # Stores global states for the app
+│── color_controller.py      # logic and ui
 │── pictures/
 │   └── icon.png             # Application icon
 │── README.md                # This documentation

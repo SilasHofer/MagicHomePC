@@ -7,7 +7,7 @@ import math
 from colorsys import hsv_to_rgb, rgb_to_hsv
 import functools
 import sys
-import Device_manager_window
+import DeviceManager
 import csv_controller
 
 
@@ -17,7 +17,7 @@ def open_window(icon):
     try:
         shared_state.bulb = WifiLedBulb(csv_controller.read_from_csv()[0][1])
     except Exception as e:
-        shared_state.isConected = False
+        shared_state.is_connected = False
     
     # Check if the window is already open
     if not hasattr(open_window, "window_opened") or not open_window.window_opened:
@@ -67,20 +67,20 @@ def open_window(icon):
                 )
             try:
                 selected_device.set(new_devices[0][0])
-                shared_state.isConected = True
+                shared_state.is_connected = True
             except Exception as e:
-                shared_state.isConected = False
+                shared_state.is_connected = False
                 frame_inside.pack_forget()
                 return
             return new_devices[0][0]
 
         # Add device
-        Add_device = tk.Button(frame, text="Device manager", command=lambda: Device_manager_window.open_add_device_window(icon,update_dropdown))
+        Add_device = tk.Button(frame, text="Device manager", command=lambda: DeviceManager.open_add_device_window(icon,update_dropdown))
         Add_device.grid(row=0, column=1, padx=5)
 
         selected_device_old = update_dropdown()
         
-        if(shared_state.isConected == True):
+        if(shared_state.is_connected == True):
 
             selected_device.trace("w", lambda *args: action.change_device(selected_device,selected_device_old, csv_controller.read_from_csv(),canvas,marker,red_var,green_var,blue_var,message_label))
 

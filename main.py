@@ -2,7 +2,7 @@ import sys
 import threading
 from pystray import Icon, MenuItem, Menu
 from PIL import Image, ImageDraw
-from main_window import open_window
+from mainWindow import open_window
 
 
 # Function to create the system tray icon
