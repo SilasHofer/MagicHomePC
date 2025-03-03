@@ -1,14 +1,13 @@
 import math
 import shared_state
-import bulb_actions as action
 from colorsys import hsv_to_rgb, rgb_to_hsv
 from flux_led import WifiLedBulb
 import csv_controller
-from color_controller import apply_color_change
 import logging
 
 # Handle user click on the color wheel
 def on_color_select(event,canvas,marker,red_input,green_input,blue_input):
+    from color_controller import apply_color_change
     radius = shared_state.canvas_size // 2
     dx = event.x - radius
     dy = event.y - radius
@@ -39,7 +38,7 @@ def move_white_point(canvas,marker):
         # Convert RGB to HSV
     point_size = shared_state.point_size
     radius = shared_state.canvas_size // 2
-    red, green, blue = [c / 255 for c in action.get_color()]  # Normalize RGB to 0–1
+    red, green, blue = [c / 255 for c in shared_state.bulb.getRgb()]  # Normalize RGB to 0–1
     hue, saturation, _ = rgb_to_hsv(red, green, blue)
 
     # Convert HSV to position on the canvas

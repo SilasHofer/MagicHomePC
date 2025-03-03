@@ -12,6 +12,7 @@ import csv_controller
 
 
 
+
 # Function to open the Tkinter window for light control
 def open_window(icon):
     try:

@@ -3,8 +3,8 @@ from colorsys import rgb_to_hsv
 import numpy as np
 import math
 
-import ui_helpers as help
-import shared_state
+from ui_helpers import move_white_point, update_rgb_values
+import shared_state 
 
 # Function to turn on the light
 def Toggle_bulb():
@@ -54,7 +54,6 @@ def set_brightness(brightness):
     shared_state.bulb.setRgb(red,blue,green)
 
 
-
 def get_brightness():
     color = shared_state.bulb.getRgb()
     color_array = np.array(color)
@@ -74,7 +73,7 @@ def change_color(*args,red_var, green_var, blue_var,canvas,marker):
             green = int(green_var.get())
             blue = int(blue_var.get())
             set_rgb((red,green,blue))
-            help.move_white_point(canvas,marker)
+            move_white_point(canvas,marker)
         else:
             shared_state.system_change = False
         # Call your desired function here
@@ -101,7 +100,7 @@ def change_device(selected_device,selected_device_old,devices,canvas,marker,red_
 
     color = get_color()
 
-    help.move_white_point(canvas,marker)
-    help.update_rgb_values(red_input,green_input,blue_input,color[0], color[1], color[2])
+    move_white_point(canvas,marker)
+    update_rgb_values(red_input,green_input,blue_input,color[0], color[1], color[2])
     message_label.config(text="", fg="red")
     selected_device_old = selected_device.get()
