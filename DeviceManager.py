@@ -2,6 +2,7 @@ import csv_controller
 import tkinter as tk
 from tkinter import ttk
 import ui_helpers
+
 def open_add_device_window(icon, callback=None):
     # Check if the window is already open
     if not hasattr(open_add_device_window, "window_opened") or not open_add_device_window.window_opened:
@@ -39,9 +40,14 @@ def open_add_device_window(icon, callback=None):
         Check_Connection = tk.Button(frame, text="Check", command=lambda: ui_helpers.try_to_connect(ip.get(),message_label))
         Check_Connection.grid(row=5, column=0, padx=5,pady=5)
 
+        # Check Connection button for the window
+        Scan_devices = tk.Button(frame, text="Scan", command=lambda: ui_helpers.Scan_tuya_devices(tree))
+        Scan_devices.grid(row=5, column=1, padx=5,pady=5)
+
+
         # Quit button for the window
         quit_button = tk.Button(frame, text="Close", command=lambda: on_close())
-        quit_button.grid(row=7, column=1, padx=5,pady=5)
+        quit_button.grid(row=8, column=1, padx=5,pady=5)
 
         # Check Connection button for the window
         Save = tk.Button(frame, text="Save", command=lambda: ui_helpers.save_device(name,ip,message_label,tree))
@@ -49,19 +55,21 @@ def open_add_device_window(icon, callback=None):
 
         # Add the label to display messages
         message_label = tk.Label(frame, text="", fg="black")
-        message_label.grid(row=5, column=1, columnspan=2, pady=5)
+        message_label.grid(row=6, column=1, columnspan=2, pady=5)
 
        # Add a Treeview (table-like) to display devices
-        tree = ttk.Treeview(frame, columns=("Name", "IP","Action"), show="headings", height=5)
-        tree.grid(row=6, column=0, columnspan=3,padx=5, pady=5)
+        tree = ttk.Treeview(frame, columns=("Name", "IP","Type","Action"), show="headings", height=5)
+        tree.grid(row=7, column=0, columnspan=3,padx=5, pady=5)
 
         # Define columns for the Treeview (table)
         tree.heading("Name", text="Name")
         tree.heading("IP", text="IP")
+        tree.heading("Type", text="Type")
         tree.heading("Action", text="Action")
 
         tree.column("Name", width=75)
         tree.column("IP", width=75)
+        tree.column("Type", width=75)
         tree.column("Action", width=50)
 
         ui_helpers.update_device_list(tree)
@@ -74,9 +82,14 @@ def open_add_device_window(icon, callback=None):
                 col = tree.identify_column(event.x)
                 row_id = tree.identify_row(event.y)
                 if col == "#3":  # This is the "Actions" column
+                    action_text = tree.item(row_id)['values'][2].lower()
+                    print(action_text)
                     device_ip = tree.item(row_id)['values'][1]  # Get the IP of the clicked row
-                    if csv_controller.remove_from_csv(device_ip):
-                        ui_helpers.update_device_list(tree)
+                    if(action_text == "delete"):
+                        if csv_controller.remove_from_csv(device_ip):
+                            ui_helpers.update_device_list(tree)
+                    if(action_text == "add"):
+                        print("add")
 
         # Bind click event to the treeview
         tree.bind("<ButtonRelease-1>", on_item_click)

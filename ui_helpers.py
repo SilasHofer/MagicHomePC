@@ -4,6 +4,8 @@ from colorsys import hsv_to_rgb, rgb_to_hsv
 from flux_led import WifiLedBulb
 import csv_controller
 import logging
+import tinytuya
+import json
 
 # Handle user click on the color wheel
 def on_color_select(event,canvas,marker,red_input,green_input,blue_input):
@@ -78,13 +80,13 @@ def update_device_list(tree):
     for row in tree.get_children():
         tree.delete(row)  # Clear previous rows
     for device in devices:
-        tree.insert("", "end", values=(device[0], device[1], "DELETE"))
+        tree.insert("", "end", values=(device[0], device[1],device[2], "DELETE"))
 
 
 
 def save_device(name,ip,message_label,tree):
     if try_to_connect(ip.get(),message_label):
-        if csv_controller.save_to_csv(name.get(),ip.get()):
+        if csv_controller.save_to_csv(name.get(),ip.get()," Flux"):
             update_device_list(tree)
             message_label.config(text="Device Saved", fg="green")
             logging.info(f"Device {name.get()} ({ip.get()}) saved successfully.")
@@ -103,3 +105,11 @@ def validate_rgb_input(P):
         if 0 <= value <= 255:  # Ensure the number is between 0 and 255
             return True
     return False
+
+def Scan_tuya_devices(tree):
+    tinytuya.scan()
+    # Open and read the snapshot file
+    with open('snapshot.json', 'r') as f:
+        devices = json.load(f)
+    for device in devices['devices']:
+        tree.insert("", "end", values=(device.get('id'), device.get('ip'), "ADD"))

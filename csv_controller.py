@@ -1,11 +1,11 @@
 import csv
 
 # Save a name and IP address to a CSV file
-def save_to_csv(name, ip, filename="devices.csv"):
+def save_to_csv(name, ip, tool ,filename="devices.csv"):
     # Open in append mode and write as a new row
     with open(filename, "a", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow([name, ip])
+        writer.writerow([name, ip, tool])
     return True
 
 # Read all entries from the CSV file
@@ -15,9 +15,11 @@ def read_from_csv(filename="devices.csv"):
         with open(filename, "r") as file:
             reader = csv.reader(file)
             for row in reader:
-                entries.append((row[0], row[1]))
+                entries.append((row[0], row[1],row[2]))
     except FileNotFoundError:
-        return []  # Return empty list if file does not exist
+        return []  # Return empty list if file does not exist#
+    # except IndexError:
+    #     return []
     return entries
 
 def remove_from_csv(ip,filename="devices.csv"):
