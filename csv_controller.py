@@ -22,8 +22,11 @@ def read_from_csv(filename="devices.csv"):
 
 def remove_from_csv(ip,filename="devices.csv"):
     devices = read_from_csv()
-    devices = [row for row in devices if row[1] != ip]
+    new_devices = [row for row in devices if row[1] != ip]
+    if len(new_devices) == len(devices):
+        return False
+
     with open(filename, mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerows(devices)
+        writer.writerows(new_devices)
     return True
