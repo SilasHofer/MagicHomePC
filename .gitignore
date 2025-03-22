@@ -3,3 +3,6 @@ __pycache__/
 *.csv
 .coverage
 snapshot.json
+devices.json
+tinytuya.json
+tuya-raw.json

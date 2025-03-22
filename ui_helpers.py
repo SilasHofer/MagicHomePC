@@ -108,8 +108,20 @@ def validate_rgb_input(P):
 
 def Scan_tuya_devices(tree):
     tinytuya.scan()
-    # Open and read the snapshot file
+    # Open and read the snapshot fil
     with open('snapshot.json', 'r') as f:
         devices = json.load(f)
     for device in devices['devices']:
-        tree.insert("", "end", values=(device.get('id'), device.get('ip'), "ADD"))
+        if(device.get('name') != "" and device.get('ip') != ""):
+            tree.insert("", "end", values=(device.get('name'), device.get('ip'),"tuya", "ADD",device.get('id'),device.get('key'),device.get('dps'),device.get('ver')))
+
+
+def add_tuya_device(tree,row_id):
+    try:
+        device = tinytuya.OutletDevice(tree.item(row_id)['values'][4], tree.item(row_id)['values'][1], tree.item(row_id)['values'][5])
+        device.set_version(float(tree.item(row_id)['values'][7]))
+        if(device.status()):
+            if csv_controller.save_to_csv(tree.item(row_id)['values'][0], tree.item(row_id)['values'][1],tree.item(row_id)['values'][4],tree.item(row_id)['values'][5],"Tuya"):
+                update_device_list(tree)
+    except Exception as e:
+        print(e)

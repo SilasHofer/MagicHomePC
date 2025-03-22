@@ -81,15 +81,14 @@ def open_add_device_window(icon, callback=None):
             if region == "cell":
                 col = tree.identify_column(event.x)
                 row_id = tree.identify_row(event.y)
-                if col == "#3":  # This is the "Actions" column
-                    action_text = tree.item(row_id)['values'][2].lower()
-                    print(action_text)
+                if col == "#4":  # This is the "Actions" column
+                    action_text = tree.item(row_id)['values'][3].lower()
                     device_ip = tree.item(row_id)['values'][1]  # Get the IP of the clicked row
                     if(action_text == "delete"):
                         if csv_controller.remove_from_csv(device_ip):
                             ui_helpers.update_device_list(tree)
                     if(action_text == "add"):
-                        print("add")
+                        ui_helpers.add_tuya_device(tree,row_id)
 
         # Bind click event to the treeview
         tree.bind("<ButtonRelease-1>", on_item_click)
