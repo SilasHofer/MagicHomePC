@@ -38,18 +38,21 @@ A Python-based GUI application to control smart WiFi LED bulbs using the `flux_l
 ## File Structure
 ```
 Magic-Home-Control/
-│── main.py                 # Entry point for the application
-│── mainWindow.py           # GUI for light control
-│── DeviceManager.py        # GUI for managing connected bulbs
-│── bulb_actions.py          # Functions for controlling bulb states
-│── csv_controller.py        # Handles reading/writing device information
-│── ui_helpers.py            # Helper functions for UI
-│── shared_state.py          # Stores global states for the app
-│── color_controller.py      # logic and ui
+│── main.py # Entry point for the application
+│── mainWindow.py # GUI for light control
+│── DeviceManager.py # Manages connected bulb data
+│── bulb_actions.py # Functions for controlling bulb states
+│── color_controller.py # Handles RGB and hex color logic
+│── csv_controller.py # Handles reading/writing device info
+│── shared_state.py # Stores global state across modules
+│── ui_helpers.py # Reusable UI helpers
 │── pictures/
-│   └── icon.png             # Application icon
-│── README.md                # This documentation
-│── .gitignore               # Files to ignore in version control
+│ └── icon.png # Application icon
+│── tests/
+│ ├── test_bulb_actions.py # Unit tests for bulb control
+│ └── test_csv_controller.py # Unit tests for CSV handling
+│── README.md # Project documentation
+│── .gitignore # Git ignored files
 ```
 
 ## Future Improvements
