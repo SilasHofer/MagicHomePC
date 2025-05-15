@@ -2,6 +2,11 @@
 
 A Python-based GUI application to control smart WiFi LED bulbs using the `flux_led` library. The application provides a system tray icon, a graphical interface to manage and control connected bulbs, and the ability to save and load device configurations.
 
+## 📌 Status
+
+🚧 **Work in Progress**  
+This project is under active development – feedback and suggestions are welcome.
+
 ## Features
 - **System Tray Control:** Run the app from the system tray with quick actions.
 - **GUI for Device Management:** Add, remove, and manage smart bulbs.
