@@ -96,11 +96,11 @@ def open_window(icon):
             turn_on_button.grid(row=2, column=1, padx=5)
 
             # turn On all button
-            turn_on_button = tk.Button(frame_inside, text="turn On all", command=lambda: action.turn_on_all_bulbs(csv_controller.read_from_csv()))
+            turn_on_button = tk.Button(frame_inside, text="Turn On all", command=lambda: action.turn_on_all_bulbs(csv_controller.read_from_csv()))
             turn_on_button.grid(row=2, column=2, padx=5)
 
             # turn off all button
-            turn_on_button = tk.Button(frame_inside, text="turn off all", command=lambda: action.turn_off_all_bulbs(csv_controller.read_from_csv()))
+            turn_on_button = tk.Button(frame_inside, text="Turn off all", command=lambda: action.turn_off_all_bulbs(csv_controller.read_from_csv()))
             turn_on_button.grid(row=2, column=3, padx=5)
 
             # Create the canvas for the color wheel

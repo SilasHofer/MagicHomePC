@@ -15,6 +15,15 @@ This project is under active development – feedback and suggestions are welcom
 - **Persistent Device Storage:** Saves device configurations in a CSV file.
 - **Connection Testing:** Check connectivity to bulbs before saving them.
 
+## 🖼️ Screenshots
+
+### 🌈 Main Window
+![Main Window](pictures/main_window.png)
+
+### 💡 Device Manager
+![Device Manager](pictures/device_manager.png)
+
+
 ## Installation
 ### Prerequisites
 - Python 3.x
