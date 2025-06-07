@@ -23,10 +23,8 @@ def quit_action(icon):
     sys.exit()
 
 
-
 # Function to start the system tray
 def run_tray():
-
     icon = Icon(name="Magic Home Control",icon=create_image(),title="Magic Home Control",menu=Menu(
     MenuItem(text="Left-Click-Action",action=open_window,default=True),
     MenuItem(text="Quit", action=quit_action)

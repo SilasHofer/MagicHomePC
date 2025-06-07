@@ -73,6 +73,7 @@ def update_device_list(tree):
     # Get the devices from the CSV and update the Treeview
     try:
         devices = csv_controller.read_from_csv()
+
     except Exception as e:
         logging.error(f"Failed to read devices: {e}")
         return
@@ -90,6 +91,7 @@ def save_device(name,ip,message_label,tree):
             update_device_list(tree)
             message_label.config(text="Device Saved", fg="green")
             logging.info(f"Device {name.get()} ({ip.get()}) saved successfully.")
+            shared_state.bulb = WifiLedBulb(ip.get())
             return True
     logging.error(f"Failed to save device {name.get()} ({ip.get()}).")
     return False
