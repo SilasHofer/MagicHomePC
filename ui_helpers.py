@@ -87,13 +87,16 @@ def update_device_list(tree):
 
 def save_device(name,ip,message_label,tree):
     if try_to_connect(ip.get(),message_label):
-        if csv_controller.save_to_csv(name.get(),ip.get()," Flux"):
+        if csv_controller.save_to_csv(name.get(),ip.get(),"Flux"):
             update_device_list(tree)
             message_label.config(text="Device Saved", fg="green")
             logging.info(f"Device {name.get()} ({ip.get()}) saved successfully.")
             shared_state.bulb = WifiLedBulb(ip.get())
             return True
+        message_label.config(text="Duplicate device", fg="red")
+        return False
     logging.error(f"Failed to save device {name.get()} ({ip.get()}).")
+    message_label.config(text="Connection Failed", fg="red")
     return False
 
         # Function to validate the input (only allow digits and limit the length to 3 digits)
