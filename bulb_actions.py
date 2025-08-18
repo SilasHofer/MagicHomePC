@@ -55,6 +55,8 @@ def set_brightness(brightness):
 
 
 def get_brightness():
+    if(shared_state.bulb is None):
+        return 0
     color = shared_state.bulb.getRgb()
     color_array = np.array(color)
     max = color_array.max()
@@ -64,6 +66,8 @@ def get_status():
     return shared_state.bulb.is_on
 
 def get_color():
+    if(shared_state.bulb is None):
+        return (0, 0, 0)
     return shared_state.bulb.getRgb()
 
 def change_color(*args,red_var, green_var, blue_var,canvas,marker):

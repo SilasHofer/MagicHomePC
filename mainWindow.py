@@ -15,10 +15,10 @@ import csv_controller
 
 # Function to open the Tkinter window for light control
 def open_window(icon):
-    try:
-        shared_state.bulb = WifiLedBulb(csv_controller.read_from_csv()[0][1])
-    except Exception as e:
-        print(f"Error connecting to bulb: {e}")
+    # try:
+    #     shared_state.bulb = WifiLedBulb(csv_controller.read_from_csv()[0][1])
+    # except Exception as e:
+    #     print(f"Error connecting to bulb: {e}")
     
     # Check if the window is already open
     if not hasattr(open_window, "window_opened") or not open_window.window_opened:
@@ -164,18 +164,25 @@ def open_window(icon):
         def update_dropdown():
             new_devices = csv_controller.read_from_csv()
             nonlocal device_dropdown
-
-            if new_devices:
+            connected_devices = []
+            for device in new_devices:
+                try:
+                    WifiLedBulb(device[1])
+                    connected_devices.append(device)
+                except Exception as e:
+                    print(f"Device {device[0]} at {device[1]} connection error: {e}")
+            
+            if connected_devices:
                 device_dropdown = render_device_controls(True, device_dropdown)
                 menu = device_dropdown["menu"]
                 menu.delete(0, "end")
-                for device in new_devices:
+                for device in connected_devices:
                     menu.add_command(
                         label=device[0],
                         command=tk._setit(selected_device, device[0])
                     )
                 try:
-                    selected_device.set(new_devices[0][0])
+                    selected_device.set(connected_devices[0][0])
                 except Exception as e:
                     print(f"Error setting selected device: {e}")
                     device_dropdown = render_device_controls(False, device_dropdown)
