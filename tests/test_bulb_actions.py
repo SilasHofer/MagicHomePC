@@ -28,7 +28,7 @@ def test_turn_off_all_bulbs(mock_bulb_class):
     mock_bulb_class.side_effect = mock_bulb_instances  # Each call creates a NEW mock instance
 
     # Example list of devices (name, IP address)
-    devices = [("Living Room", "192.168.1.10"), ("Bedroom", "192.168.1.11")]
+    devices = [("Living Room", "192.168.1.10","Flux"), ("Bedroom", "192.168.1.11","Flux")]
 
     # Call the function
     turn_off_all_bulbs(devices)
@@ -51,7 +51,7 @@ def test_turn_on_all_bulbs(mock_bulb_class):
     mock_bulb_class.side_effect = mock_bulb_instances  # Each call creates a NEW mock instance
 
     # Example list of devices (name, IP address)
-    devices = [("Living Room", "192.168.1.10"), ("Bedroom", "192.168.1.11")]
+    devices = [("Living Room", "192.168.1.10","Flux"), ("Bedroom", "192.168.1.11","Flux")]
 
     # Call the function
     turn_on_all_bulbs(devices)

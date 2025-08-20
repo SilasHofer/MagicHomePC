@@ -4,20 +4,20 @@ from unittest.mock import patch, mock_open
 
 @patch("builtins.open", new_callable=mock_open)
 def test_save_to_csv(mock_file):
-    result = save_to_csv("Test", "192.168.10.123")
+    result = save_to_csv("Test", "192.168.10.123", "Flux")
     assert result == True
-    mock_file.assert_called_once_with("devices.csv", "a", newline="")
+    mock_file.assert_called_once_with("devices.csv", "a+", newline="")
     mock_file_handle = mock_file()
     written_data = mock_file_handle.write.call_args_list
 
-    expected_data = "Test,192.168.10.123"
+    expected_data = "Test,192.168.10.123,none,Flux,none"
     assert any(expected_data in str(call) for call in written_data)
 
 
 @patch("builtins.open", new_callable=mock_open)
 def test_save_to_csv_multiple(mock_file):
-    result1 = save_to_csv("Test", "192.168.10.123")
-    result2 = save_to_csv("Test2", "192.168.10.200")
+    result1 = save_to_csv("Test", "192.168.10.123", "Flux")
+    result2 = save_to_csv("Test2", "192.168.10.200", "Flux")
 
     assert result1 == True
     assert result2 == True
@@ -29,27 +29,27 @@ def test_save_to_csv_multiple(mock_file):
     written_data = [call.args[0].strip() for call in mock_file_handle.write.call_args_list]
 
     # ✅ Ensure expected data is written
-    expected_data = ["Test,192.168.10.123","Test2,192.168.10.200"]  # CSV writer adds newline
+    expected_data = ["Test,192.168.10.123,none,Flux,none","Test2,192.168.10.200,none,Flux,none"]  # CSV writer adds newline
 
     assert written_data == expected_data, f"Expected {expected_data} but got {written_data}"
 
 def test_read_from_csv():
-    mock_csv_data = "Tisch,192.168.0.38"
+    mock_csv_data = "Tisch,192.168.0.38,Flux"
 
     # ✅ Mock the open() function
     with patch("builtins.open", mock_open(read_data=mock_csv_data)) as mock_file:
         result = read_from_csv()  # Fake filename, but mocked
 
-    assert result == [("Tisch", "192.168.0.38")]
+    assert result == [("Tisch", "192.168.0.38", "Flux")]
 
 def test_read_from_csv_multiple():
-    mock_csv_data = "Tisch,192.168.0.38\nSofa,192.168.0.39\nlampe,192.168.0.200"
+    mock_csv_data = "Tisch,192.168.0.38,Flux\nSofa,192.168.0.39,Flux\nlampe,192.168.0.200,Flux"
 
     # ✅ Mock the open() function
     with patch("builtins.open", mock_open(read_data=mock_csv_data)) as mock_file:
         result = read_from_csv()  # Fake filename, but mocked
 
-    assert result == [("Tisch", "192.168.0.38"),("Sofa", "192.168.0.39"),("lampe", "192.168.0.200")]
+    assert result == [("Tisch", "192.168.0.38", "Flux"),("Sofa", "192.168.0.39", "Flux"),("lampe", "192.168.0.200", "Flux")]
 
 def test_read_from_csv_empty():
     mock_csv_data = ""
