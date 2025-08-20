@@ -167,8 +167,9 @@ def open_window(icon):
             connected_devices = []
             for device in new_devices:
                 try:
-                    WifiLedBulb(device[1])
-                    connected_devices.append(device)
+                    if device[2] == "Flux":
+                        WifiLedBulb(device[1])
+                        connected_devices.append(device)
                 except Exception as e:
                     print(f"Device {device[0]} at {device[1]} connection error: {e}")
             

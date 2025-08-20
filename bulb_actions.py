@@ -16,13 +16,15 @@ def Toggle_bulb():
 
 def turn_off_all_bulbs(devices):
     for device in devices:
-        bulb = WifiLedBulb(device[1])
-        bulb.turnOff()
+        if device[2] == "Flux":
+            bulb = WifiLedBulb(device[1])
+            bulb.turnOff()
 
 def turn_on_all_bulbs(devices):
     for device in devices:
-        shared_state.bulb = WifiLedBulb(device[1])
-        shared_state.bulb.turnOn()
+        if device[2] == "Flux":
+            shared_state.bulb = WifiLedBulb(device[1])
+            shared_state.bulb.turnOn()
 
 
 # Function to change color to Red

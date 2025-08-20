@@ -20,7 +20,7 @@ def read_from_csv(filename="devices.csv"):
         with open(filename, "r") as file:
             reader = csv.reader(file)
             for row in reader:
-                entries.append((row[0], row[1],row[-2]))
+                entries.append((row[0], row[1],row[-1]))
     except FileNotFoundError:
         return []  # Return empty list if file does not exist#
     # except IndexError:
