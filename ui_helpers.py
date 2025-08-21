@@ -124,9 +124,12 @@ def Scan_tuya_devices(tree):
 def add_tuya_device(tree,row_id):
     try:
         device = tinytuya.OutletDevice(tree.item(row_id)['values'][4], tree.item(row_id)['values'][1], tree.item(row_id)['values'][5])
-        device.set_version(float(tree.item(row_id)['values'][7]))
-        if(device.status()):
+        device.set_version(str(tree.item(row_id)['values'][7]))
+        status = device.status()
+        if status and not status.get('Error'):
             if csv_controller.save_to_csv(tree.item(row_id)['values'][0], tree.item(row_id)['values'][1],tree.item(row_id)['values'][4],tree.item(row_id)['values'][5],"Tuya"):
                 update_device_list(tree)
+        else:
+            print(f"Device unreachable: {status.get('Error')}")
     except Exception as e:
         print(e)
