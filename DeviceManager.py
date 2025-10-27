@@ -8,14 +8,14 @@ def open_add_device_window(icon, callback=None):
     if not hasattr(open_add_device_window, "window_opened") or not open_add_device_window.window_opened:
         open_add_device_window.window_opened = True
             # Create the Tkinter window
-        window = tk.Tk()
+        window = tk.Toplevel()
         window.title("Device manager")
 
         # Get the current position of the mouse
         x, y = window.winfo_pointerxy()
 
         # Set the window size
-        window_width = 300
+        window_width = 375
         window_height = 350
 
         # Set the window size and position
@@ -36,42 +36,55 @@ def open_add_device_window(icon, callback=None):
         # Label for RGB
         tk.Label(frame, text="IP:").grid(row=2, column=1, padx=5)
 
+        # Create a StringVar with default
+        color_order_var = tk.StringVar(value="RGB")
+
+        # Label
+        tk.Label(frame, text="Color Order:").grid(row=4, column=1, padx=5)
+
+        # Dropdown (Combobox)
+        color_order_dropdown = ttk.Combobox(frame, textvariable=color_order_var, state="readonly")
+        color_order_dropdown['values'] = ("RGB", "GRB", "BGR", "GBR", "RBG", "BRG")
+        color_order_dropdown.grid(row=5, column=1, padx=10, pady=5)
+
+        # Ensure the default is visible / selected
+        color_order_dropdown.current(0)  # select first value ("RGB")
+        # Optional: color_order_dropdown.set(color_order_var.get())
+
         # Check Connection button for the window
         Check_Connection = tk.Button(frame, text="Check", command=lambda: ui_helpers.try_to_connect(ip.get(),message_label))
-        Check_Connection.grid(row=5, column=0, padx=5,pady=5)
-
-
-        # Quit button for the window
-        quit_button = tk.Button(frame, text="Close", command=lambda: on_close())
-        quit_button.grid(row=8, column=1, padx=5,pady=5)
+        Check_Connection.grid(row=6, column=1, padx=5,pady=5)
 
         # Save button
         Save = tk.Button(
             frame,
             text="Save",
             command=lambda: (
-                ui_helpers.save_device(name, ip, message_label, tree)
+                ui_helpers.save_device(name, ip, color_order_var, message_label, tree)
             )
         )
-        Save.grid(row=5, column=2, padx=5, pady=5)
+        Save.grid(row=6, column=2, padx=5, pady=5)
 
         # Add the label to display messages
         message_label = tk.Label(frame, text="", fg="black")
-        message_label.grid(row=6, column=1, columnspan=2, pady=5)
+        message_label.grid(row=7, column=1, columnspan=2, pady=5)
 
        # Add a Treeview (table-like) to display devices
-        tree = ttk.Treeview(frame, columns=("Name", "IP","Type","Action"), show="headings", height=5)
-        tree.grid(row=7, column=0, columnspan=3,padx=5, pady=5)
+        tree = ttk.Treeview(frame, columns=("Name", "IP","Type","color_order","Action"), show="headings", height=5)
+        tree.grid(row=8, column=0, columnspan=3,padx=5, pady=5)
 
         # Define columns for the Treeview (table)
         tree.heading("Name", text="Name")
         tree.heading("IP", text="IP")
         tree.heading("Type", text="Type")
+        tree.heading("color_order", text="Color Order")
         tree.heading("Action", text="Action")
+
 
         tree.column("Name", width=75)
         tree.column("IP", width=75)
         tree.column("Type", width=75)
+        tree.column("color_order", width=75)
         tree.column("Action", width=50)
 
         ui_helpers.update_device_list(tree)
@@ -83,8 +96,8 @@ def open_add_device_window(icon, callback=None):
             if region == "cell":
                 col = tree.identify_column(event.x)
                 row_id = tree.identify_row(event.y)
-                if col == "#4":  # This is the "Actions" column
-                    action_text = tree.item(row_id)['values'][3].lower()
+                if col == "#5":  # This is the "Actions" column
+                    action_text = tree.item(row_id)['values'][4].lower()
                     device_ip = tree.item(row_id)['values'][1]  # Get the IP of the clicked row
                     if(action_text == "delete"):
                         if csv_controller.remove_from_csv(device_ip):
@@ -95,6 +108,9 @@ def open_add_device_window(icon, callback=None):
         # Bind click event to the treeview
         tree.bind("<ButtonRelease-1>", on_item_click)
 
+        # Quit button for the window
+        quit_button = tk.Button(frame, text="Close", command=lambda: on_close())
+        quit_button.grid(row=9, column=1, padx=5,pady=5)
 
         # Handle window close event
         def on_close():

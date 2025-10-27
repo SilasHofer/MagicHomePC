@@ -2,12 +2,13 @@ import math
 import shared_state
 from colorsys import hsv_to_rgb, rgb_to_hsv
 from flux_led import WifiLedBulb
+import bulb_actions
 import csv_controller
 import logging
+import tkinter as tk
 
 # Handle user click on the color wheel
 def on_color_select(event,canvas,marker,red_input,green_input,blue_input):
-    from color_controller import apply_color_change
     radius = shared_state.canvas_size // 2
     dx = event.x - radius
     dy = event.y - radius
@@ -18,8 +19,10 @@ def on_color_select(event,canvas,marker,red_input,green_input,blue_input):
         saturation = distance / radius
         red, green, blue = hsv_to_rgb(hue, saturation, 1)
         color = (int(red * 255), int(green * 255), int(blue * 255))
+        r, g, b = bulb_actions.apply_color_order(color[0], color[1], color[2], shared_state.current_device_info)
         if shared_state.bulb:
-            apply_color_change(color,canvas,marker,red_input,green_input,blue_input)
+            bulb_actions.change_color(red_var=tk.StringVar(value=color[0]), green_var=tk.StringVar(value=color[1]), blue_var=tk.StringVar(value=color[2]),canvas=canvas,marker=marker)
+            update_rgb_values(red_input,green_input,blue_input,r, g, b)
             logging.info(f"User selected color: {color}") 
 
             
@@ -39,7 +42,8 @@ def move_white_point(canvas,marker):
     point_size = shared_state.point_size
     radius = shared_state.canvas_size // 2
     red, green, blue = [c / 255 for c in shared_state.bulb.getRgb()]  # Normalize RGB to 0–1
-    hue, saturation, _ = rgb_to_hsv(red, green, blue)
+    r, g, b = bulb_actions.apply_color_order(red, green, blue, shared_state.current_device_info)
+    hue, saturation, _ = rgb_to_hsv(r, g, b)
 
     # Convert HSV to position on the canvas
     angle = hue * 360  # Hue in degrees
@@ -79,13 +83,13 @@ def update_device_list(tree):
     for row in tree.get_children():
         tree.delete(row)  # Clear previous rows
     for device in devices:
-        tree.insert("", "end", values=(device[0], device[1],device[2], "DELETE"))
+        tree.insert("", "end", values=(device[0], device[1],device[2],device[3], "DELETE"))
 
 
 
-def save_device(name,ip,message_label,tree):
+def save_device(name,ip, color_order,message_label,tree):
     if try_to_connect(ip.get(),message_label):
-        if csv_controller.save_to_csv(name.get(),ip.get(),"Flux"):
+        if csv_controller.save_to_csv(name.get(),ip.get(),"Flux",color_order.get()):
             update_device_list(tree)
             message_label.config(text="Device Saved", fg="green")
             logging.info(f"Device {name.get()} ({ip.get()}) saved successfully.")

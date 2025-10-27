@@ -1,7 +1,7 @@
 import csv
 
 # Save a name and IP address to a CSV file
-def save_to_csv(name, ip, tool,filename="devices.csv"):
+def save_to_csv(name, ip, tool, color_order, filename="devices.csv"):
     # Open in append mode and write as a new row
     with open(filename, "a+", newline="") as file:
         file.seek(0)
@@ -10,7 +10,7 @@ def save_to_csv(name, ip, tool,filename="devices.csv"):
             if row[1] == ip:
                 return False
         writer = csv.writer(file)
-        writer.writerow([name,ip,tool])
+        writer.writerow([name, ip, tool, color_order])
     return True
 
 # Read all entries from the CSV file
@@ -20,7 +20,7 @@ def read_from_csv(filename="devices.csv"):
         with open(filename, "r") as file:
             reader = csv.reader(file)
             for row in reader:
-                entries.append((row[0], row[1],row[-1]))
+                entries.append((row[0], row[1],row[-2],row[-1]))
     except FileNotFoundError:
         return []  # Return empty list if file does not exist#
     # except IndexError:

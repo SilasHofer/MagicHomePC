@@ -148,6 +148,7 @@ def open_window(icon):
             brightness_slider.grid(row=5, column=1, columnspan=3, pady=10)
 
             canvas.bind("<Button-1>", lambda event: help.on_color_select(event, canvas, marker, red_var, green_var, blue_var))
+            
             selected_device.trace_add("write", lambda *args: action.change_device(
                 selected_device,
                 selected_device_old,
