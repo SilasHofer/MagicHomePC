@@ -40,10 +40,6 @@ def open_add_device_window(icon, callback=None):
         Check_Connection = tk.Button(frame, text="Check", command=lambda: ui_helpers.try_to_connect(ip.get(),message_label))
         Check_Connection.grid(row=5, column=0, padx=5,pady=5)
 
-        # Check Connection button for the window
-        Scan_devices = tk.Button(frame, text="Scan", command=lambda: ui_helpers.Scan_tuya_devices(tree))
-        Scan_devices.grid(row=5, column=1, padx=5,pady=5)
-
 
         # Quit button for the window
         quit_button = tk.Button(frame, text="Close", command=lambda: on_close())

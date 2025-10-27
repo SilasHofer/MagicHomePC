@@ -4,8 +4,6 @@ from colorsys import hsv_to_rgb, rgb_to_hsv
 from flux_led import WifiLedBulb
 import csv_controller
 import logging
-import tinytuya
-import json
 
 # Handle user click on the color wheel
 def on_color_select(event,canvas,marker,red_input,green_input,blue_input):
@@ -110,26 +108,3 @@ def validate_rgb_input(P):
         if 0 <= value <= 255:  # Ensure the number is between 0 and 255
             return True
     return False
-
-def Scan_tuya_devices(tree):
-    tinytuya.scan()
-    # Open and read the snapshot fil
-    with open('snapshot.json', 'r') as f:
-        devices = json.load(f)
-    for device in devices['devices']:
-        if(device.get('name') != "" and device.get('ip') != ""):
-            tree.insert("", "end", values=(device.get('name'), device.get('ip'),"tuya", "ADD",device.get('id'),device.get('key'),device.get('dps'),device.get('ver')))
-
-
-def add_tuya_device(tree,row_id):
-    try:
-        device = tinytuya.OutletDevice(tree.item(row_id)['values'][4], tree.item(row_id)['values'][1], tree.item(row_id)['values'][5])
-        device.set_version(str(tree.item(row_id)['values'][7]))
-        status = device.status()
-        if status and not status.get('Error'):
-            if csv_controller.save_to_csv(tree.item(row_id)['values'][0], tree.item(row_id)['values'][1],tree.item(row_id)['values'][4],tree.item(row_id)['values'][5],"Tuya"):
-                update_device_list(tree)
-        else:
-            print(f"Device unreachable: {status.get('Error')}")
-    except Exception as e:
-        print(e)
