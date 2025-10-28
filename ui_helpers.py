@@ -19,10 +19,9 @@ def on_color_select(event,canvas,marker,red_input,green_input,blue_input):
         saturation = distance / radius
         red, green, blue = hsv_to_rgb(hue, saturation, 1)
         color = (int(red * 255), int(green * 255), int(blue * 255))
-        r, g, b = bulb_actions.apply_color_order(color[0], color[1], color[2], shared_state.current_device_info)
         if shared_state.bulb:
             bulb_actions.change_color(red_var=tk.StringVar(value=color[0]), green_var=tk.StringVar(value=color[1]), blue_var=tk.StringVar(value=color[2]),canvas=canvas,marker=marker)
-            update_rgb_values(red_input,green_input,blue_input,r, g, b)
+            update_rgb_values(red_input,green_input,blue_input,color[0], color[1], color[2])
             logging.info(f"User selected color: {color}") 
 
             
@@ -38,12 +37,12 @@ def update_rgb_values(red_var,green_var,blue_var,new_red, new_green, new_blue):
 
 
 def move_white_point(canvas,marker):
-        # Convert RGB to HSV
+    # Convert RGB to HSV
     point_size = shared_state.point_size
     radius = shared_state.canvas_size // 2
-    red, green, blue = [c / 255 for c in shared_state.bulb.getRgb()]  # Normalize RGB to 0–1
-    r, g, b = bulb_actions.apply_color_order(red, green, blue, shared_state.current_device_info)
-    hue, saturation, _ = rgb_to_hsv(r, g, b)
+    colors = shared_state.bulb.getRgb()
+    red, green, blue = [c / 255 for c in bulb_actions.apply_color_order(colors[0], colors[1], colors[2], shared_state.current_device_info)]  # Normalize RGB to 0–1
+    hue, saturation, _ = rgb_to_hsv(red, green, blue)
 
     # Convert HSV to position on the canvas
     angle = hue * 360  # Hue in degrees
