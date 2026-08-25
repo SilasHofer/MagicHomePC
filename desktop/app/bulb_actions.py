@@ -3,8 +3,8 @@ from colorsys import rgb_to_hsv
 import numpy as np
 import math
 
-from ui_helpers import move_white_point, update_rgb_values
-import shared_state 
+from .ui_helpers import move_white_point, update_rgb_values
+from . import shared_state
 
 # Function to turn on the light
 def Toggle_bulb():

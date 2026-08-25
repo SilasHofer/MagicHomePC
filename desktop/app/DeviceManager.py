@@ -1,7 +1,7 @@
-import csv_controller
+from . import device_repository
 import tkinter as tk
 from tkinter import ttk
-import ui_helpers
+from . import ui_helpers
 
 def open_add_device_window(icon, callback=None):
     # Check if the window is already open
@@ -100,7 +100,7 @@ def open_add_device_window(icon, callback=None):
                     action_text = tree.item(row_id)['values'][4].lower()
                     device_ip = tree.item(row_id)['values'][1]  # Get the IP of the clicked row
                     if(action_text == "delete"):
-                        if csv_controller.remove_from_csv(device_ip):
+                        if device_repository.remove_from_csv(device_ip):
                             ui_helpers.update_device_list(tree)
                     if(action_text == "add"):
                         ui_helpers.add_tuya_device(tree,row_id)

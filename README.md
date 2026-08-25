@@ -32,6 +32,25 @@ This project is under active development – feedback and suggestions are welcom
   pip install pillow pystray flux_led numpy
   ```
 
+## Backend and Web Frontend
+
+The desktop application is contained in `desktop/`. A separate FastAPI backend and Angular frontend are provided for the web version:
+
+```text
+Angular frontend -> FastAPI backend -> Flux LED bulbs
+Tkinter desktop  -> local desktop code (existing app)
+```
+
+Install Docker Desktop, then from the project root run:
+
+```powershell
+docker compose up --build
+```
+
+Open the web frontend at `http://localhost:8080` and the backend API documentation at `http://localhost:8000/docs`. Device configuration is persisted in SQLite at `data/devices.db`; the existing CSV is imported automatically on first startup. The existing desktop app can continue to run with `python -m desktop.app.main`; `desktop/api_client.py` is available for gradually connecting it to the backend.
+
+The backend must be able to reach the bulbs on the local network. Do not expose it to the internet without adding authentication and HTTPS.
+
 ### Running the Application
 1. Clone the repository:
    ```bash
@@ -40,7 +59,7 @@ This project is under active development – feedback and suggestions are welcom
    ```
 2. Run the main script:
    ```bash
-   python main.py
+   python -m desktop.app.main
    ```
 
 ## Usage
@@ -52,21 +71,12 @@ This project is under active development – feedback and suggestions are welcom
 ## File Structure
 ```
 Magic-Home-Control/
-│── main.py # Entry point for the application
-│── mainWindow.py # GUI for light control
-│── DeviceManager.py # Manages connected bulb data
-│── bulb_actions.py # Functions for controlling bulb states
-│── color_controller.py # Handles RGB and hex color logic
-│── csv_controller.py # Handles reading/writing device info
-│── shared_state.py # Stores global state across modules
-│── ui_helpers.py # Reusable UI helpers
-│── pictures/
-│ └── icon.png # Application icon
-│── tests/
-│ ├── test_bulb_actions.py # Unit tests for bulb control
-│ └── test_csv_controller.py # Unit tests for CSV handling
-│── README.md # Project documentation
-│── .gitignore # Git ignored files
+├── backend/       # FastAPI API and bulb service
+├── frontend/      # Angular web application
+├── desktop/       # Tkinter/tray client and desktop tests
+├── data/          # Persistent device configuration
+├── compose.yaml   # Full-stack Docker orchestration
+└── README.md
 ```
 
 ## Future Improvements

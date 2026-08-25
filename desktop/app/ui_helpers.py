@@ -1,9 +1,9 @@
 import math
-import shared_state
+from . import shared_state
 from colorsys import hsv_to_rgb, rgb_to_hsv
 from flux_led import WifiLedBulb
-import bulb_actions
-import csv_controller
+from . import bulb_actions
+from . import device_repository
 import logging
 import tkinter as tk
 
@@ -73,7 +73,7 @@ def try_to_connect(ip,message_label):
 def update_device_list(tree):
     # Get the devices from the CSV and update the Treeview
     try:
-        devices = csv_controller.read_from_csv()
+        devices = device_repository.read_from_csv()
 
     except Exception as e:
         logging.error(f"Failed to read devices: {e}")
@@ -88,7 +88,7 @@ def update_device_list(tree):
 
 def save_device(name,ip, color_order,message_label,tree):
     if try_to_connect(ip.get(),message_label):
-        if csv_controller.save_to_csv(name.get(),ip.get(),"Flux",color_order.get()):
+        if device_repository.save_to_csv(name.get(),ip.get(),"Flux",color_order.get()):
             update_device_list(tree)
             message_label.config(text="Device Saved", fg="green")
             logging.info(f"Device {name.get()} ({ip.get()}) saved successfully.")

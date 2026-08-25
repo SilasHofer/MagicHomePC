@@ -1,14 +1,14 @@
-import shared_state
+from . import shared_state
 from flux_led import WifiLedBulb
 import tkinter as tk
-import bulb_actions as action
-import ui_helpers as help
+from . import bulb_actions as action
+from . import ui_helpers as help
 import math
 from colorsys import hsv_to_rgb, rgb_to_hsv
 import functools
 import sys
-import DeviceManager
-import csv_controller
+from . import DeviceManager
+from . import device_repository
 
 
 
@@ -16,7 +16,7 @@ import csv_controller
 # Function to open the Tkinter window for light control
 def open_window(icon):
     # try:
-    #     shared_state.bulb = WifiLedBulb(csv_controller.read_from_csv()[0][1])
+    #     shared_state.bulb = WifiLedBulb(device_repository.read_from_csv()[0][1])
     # except Exception as e:
     #     print(f"Error connecting to bulb: {e}")
     
@@ -80,13 +80,13 @@ def open_window(icon):
 
 
             # Device dropdown (created/destroyed with controls)
-            device_dropdown = tk.OptionMenu(frame_top, selected_device, *[device[0] for device in csv_controller.read_from_csv()])
+            device_dropdown = tk.OptionMenu(frame_top, selected_device, *[device[0] for device in device_repository.read_from_csv()])
             device_dropdown.grid(row=0, column=2, padx=5, pady=10)
 
             # Toggle buttons
             tk.Button(frame_inside, text="Toggle on/off", command=lambda: action.Toggle_bulb()).grid(row=2, column=1, padx=5)
-            tk.Button(frame_inside, text="Turn On all", command=lambda: action.turn_on_all_bulbs(csv_controller.read_from_csv())).grid(row=2, column=2, padx=5)
-            tk.Button(frame_inside, text="Turn off all", command=lambda: action.turn_off_all_bulbs(csv_controller.read_from_csv())).grid(row=2, column=3, padx=5)
+            tk.Button(frame_inside, text="Turn On all", command=lambda: action.turn_on_all_bulbs(device_repository.read_from_csv())).grid(row=2, column=2, padx=5)
+            tk.Button(frame_inside, text="Turn off all", command=lambda: action.turn_off_all_bulbs(device_repository.read_from_csv())).grid(row=2, column=3, padx=5)
 
             # --- Color wheel canvas ---
             canvas = tk.Canvas(frame_inside, width=shared_state.canvas_size, height=shared_state.canvas_size, bg=window["bg"], highlightthickness=0)
@@ -152,7 +152,7 @@ def open_window(icon):
             selected_device.trace_add("write", lambda *args: action.change_device(
                 selected_device,
                 selected_device_old,
-                csv_controller.read_from_csv(),
+                device_repository.read_from_csv(),
                 canvas,
                 marker,
                 red_var,
@@ -163,7 +163,7 @@ def open_window(icon):
             return device_dropdown  # <-- return the new dropdown
 
         def update_dropdown():
-            new_devices = csv_controller.read_from_csv()
+            new_devices = device_repository.read_from_csv()
             nonlocal device_dropdown
             connected_devices = []
             for device in new_devices:

@@ -1,5 +1,5 @@
-from bulb_actions import set_rgb
-from ui_helpers import move_white_point, update_rgb_values
+from .bulb_actions import set_rgb
+from .ui_helpers import move_white_point, update_rgb_values
 
 def apply_color_change(color, canvas, marker, red_input, green_input, blue_input):
                 set_rgb(color) # Send the color to the bulb

@@ -1,0 +1,19 @@
+services:
+  backend:
+    build: ./backend
+    environment:
+      DEVICES_DB: /app/data/devices.db
+      CORS_ORIGINS: http://localhost:4200,http://localhost:8080
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    restart: unless-stopped

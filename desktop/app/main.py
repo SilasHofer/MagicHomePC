@@ -1,15 +1,16 @@
 import sys
 import threading
+from pathlib import Path
 from pystray import Icon, MenuItem, Menu
 from PIL import Image, ImageDraw
-from mainWindow import open_window
+from .mainWindow import open_window
 
 
 # Function to create the system tray icon
 def create_image():
     # Create an image with PIL (Python Imaging Library)
     width, height = 64, 64
-    image = Image.open("pictures\icon.png")
+    image = Image.open(Path(__file__).resolve().parents[1] / "assets" / "icon.png")
     draw = ImageDraw.Draw(image)
 
     # Draw a simple circle (could be an icon)

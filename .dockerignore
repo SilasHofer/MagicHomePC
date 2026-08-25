@@ -1,0 +1,6 @@
+__pycache__/
+.pytest_cache/
+.git/
+node_modules/
+dist/
+build/

@@ -1,0 +1,76 @@
+<main class="app-shell" [class.dark-mode]="darkMode">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-mark">M</span><span>Magic Home<small>LIGHT CONTROL</small></span></div>
+    <nav aria-label="Main navigation">
+      <p class="nav-label">Workspace</p>
+      <button class="nav-item active" type="button"><span class="nav-icon">◈</span> Control room</button>
+      <button class="nav-item" type="button" (click)="managerOpen = true"><span class="nav-icon">＋</span> Devices <b>{{ devices.length }}</b></button>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="network"><span class="online-dot"></span><span><strong>Local network</strong><small>Connected</small></span></div>
+      <p class="version">MAGIC HOME <span>v1.0</span></p>
+    </div>
+  </aside>
+
+  <section class="workspace">
+    <header class="topbar">
+      <div><p class="breadcrumb">HOME / CONTROL ROOM</p><p class="date-stamp">Tuesday, August 25, 2026</p></div>
+      <div class="header-actions">
+        <button class="icon-button theme-button" type="button" (click)="toggleTheme()" [attr.aria-label]="darkMode ? 'Use light mode' : 'Use dark mode'" [title]="darkMode ? 'Use light mode' : 'Use dark mode'">{{ darkMode ? '☼' : '☾' }}</button>
+        <button class="icon-button" type="button" (click)="loadDevices()" aria-label="Refresh devices" title="Refresh devices">↻</button>
+        <button class="manage-button" type="button" (click)="managerOpen = true">Manage devices <span>→</span></button>
+      </div>
+    </header>
+
+    @if (error) { <p class="notice error" role="alert">{{ error }}</p> }
+    @if (message) { <p class="notice message" role="status">{{ message }}</p> }
+
+    @if (managerOpen) {
+      <div class="manager-backdrop" role="presentation" (click)="managerOpen = false">
+        <section class="panel manager-panel" role="dialog" aria-modal="true" aria-labelledby="manager-title" (click)="$event.stopPropagation()">
+          <div class="panel-heading"><div><p class="kicker">DEVICE MANAGER</p><h2 id="manager-title">Add a light</h2><p class="device-meta">Register a reachable bulb</p></div><button class="close-button" type="button" (click)="managerOpen = false" aria-label="Close device manager">×</button></div>
+          <form (ngSubmit)="addDevice()">
+            <label>Name<input name="name" [(ngModel)]="newDevice.name" placeholder="Living room" required></label>
+            <label>IP address<input name="ip" [(ngModel)]="newDevice.ip" placeholder="192.168.0.47" required></label>
+            <label>Channel order<select name="color_order" [(ngModel)]="newDevice.color_order">
+              @for (order of ['RGB', 'GRB', 'BGR', 'GBR', 'RBG', 'BRG']; track order) { <option [value]="order">{{ order }}</option> }
+            </select></label>
+            <div class="form-actions"><button class="outline-button" type="button" (click)="checkDevice()" [disabled]="checking">{{ checking ? 'Checking...' : 'Test connection' }}</button><button class="accent-button" type="submit" [disabled]="!newDevice.name || !newDevice.ip">Add device</button></div>
+          </form>
+          <div class="manager-note"><span>i</span><p>Devices are shared with the desktop app through the local database.</p></div>
+        </section>
+      </div>
+    }
+
+    <div class="page-intro">
+      <div><p class="kicker">CONTROL ROOM</p><h1>Shape the atmosphere.</h1><p class="intro-copy">Tune every light in your space with precision.</p></div>
+      @if (selectedDevice) { <div class="current-device"><span class="pulse"></span><span>Controlling <strong>{{ selectedDevice.name }}</strong></span></div> }
+    </div>
+
+    <div class="content-grid">
+      <section class="panel color-panel">
+        <div class="panel-heading"><div><p class="kicker">COLOR STUDIO</p><h2>Color field</h2></div><output class="hex-value">{{ colorHex() }}</output></div>
+        @if (selectedDevice) {
+          <canvas #wheel class="color-wheel" role="slider" aria-label="Choose color" tabindex="0" (pointerdown)="pickColor($event)"></canvas>
+          <div class="rgb-grid">
+            @for (channel of ['red', 'green', 'blue']; track channel; let index = $index) { <label><span class="channel-dot" [class]="channel"></span>{{ channel }}<input type="number" min="0" max="255" [(ngModel)]="selectedColor[index]" (change)="setColor()"></label> }
+          </div>
+        } @else { <div class="empty-state"><span>◌</span><h3>No light selected</h3><p>Add a device or select one from the rail.</p></div> }
+      </section>
+
+      <section class="panel command-panel">
+        @if (selectedDevice) {
+          <div class="panel-heading"><div><p class="kicker">DEVICE OUTPUT</p><h2>{{ selectedDevice.name }}</h2><p class="device-meta">{{ selectedDevice.ip }} · {{ selectedDevice.color_order }}</p></div><span class="status" [class.on]="isOn"><i></i>{{ isOn ? 'ON' : 'OFF' }}</span></div>
+          <div class="power-control"><button class="power-toggle" type="button" (click)="toggle()" [class.on]="isOn" [disabled]="loading"><span class="power-symbol">◉</span><span>{{ isOn ? 'Turn light off' : 'Turn light on' }}</span><small>{{ isOn ? 'Output is active' : 'Output is paused' }}</small></button></div>
+          <div class="slider-control"><div class="slider-label"><label for="brightness">Intensity</label><output>{{ brightness }}%</output></div><input id="brightness" type="range" min="0" max="100" [value]="brightness" (change)="setBrightness($any($event.target).value)"><div class="range-ends"><span>0</span><span>100</span></div></div>
+          <div class="quick-actions"><p class="kicker">ROOM ACTIONS</p><div><button class="outline-button" type="button" (click)="powerAll('on')">All lights on</button><button class="outline-button" type="button" (click)="powerAll('off')">All lights off</button></div></div>
+        } @else { <div class="empty-state"><span>＋</span><h3>Your room is quiet</h3><p>Select a device to start shaping the light.</p></div> }
+      </section>
+
+    </div>
+
+    <section class="device-strip"><div class="strip-heading"><div><p class="kicker">YOUR DEVICES</p><h2>Connected lights</h2></div><span>{{ devices.length }} registered</span></div><div class="device-cards">
+      @for (device of devices; track device.ip) { <div class="device-card" [class.selected]="device === selectedDevice"><button type="button" (click)="selectDevice(device)"><span class="card-orb"></span><span><strong>{{ device.name }}</strong><small>{{ device.ip }}</small></span></button><button class="delete" type="button" (click)="removeDevice(device)" aria-label="Remove device">×</button></div> } @empty { <p class="empty-strip">No devices registered yet.</p> }
+    </div></section>
+  </section>
+</main>

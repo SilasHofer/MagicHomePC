@@ -1,8 +1,14 @@
 __pycache__/
 *.py[cod]
 *.csv
+!data/devices.csv
+*.db
 .coverage
 snapshot.json
 devices.json
 tinytuya.json
 tuya-raw.json
+backend/.pytest_cache/
+frontend/node_modules/
+frontend/dist/
+desktop/__pycache__/
