@@ -2,8 +2,8 @@ import { AfterViewInit, Component, ElementRef, OnInit, ViewChild, inject } from 
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
-import { Device, DeviceCreate } from './device.model';
 import { DeviceApiService } from './device-api.service';
+import { Device, DeviceCreate } from './device.model';
 
 @Component({
   selector: 'app-root',
