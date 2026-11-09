@@ -99,6 +99,7 @@ def apply_theme(root):
               lightcolor=[("active", ACCENT_HOVER)], darkcolor=[("active", ACCENT_HOVER)])
 
     style.configure("Big.Accent.TButton", padding=(12, 11), font=font(10, "bold"))
+    style.configure("Small.Accent.TButton", padding=(12, 4), font=font(8, "bold"), width=-1)
 
     style.configure("Link.TButton", background=BG, foreground=ACCENT, bordercolor=BG,
                     lightcolor=BG, darkcolor=BG, padding=(0, 6))
@@ -120,6 +121,12 @@ def apply_theme(root):
     style.map("CardGhost.TButton",
               background=[("pressed", BORDER), ("active", BUTTON)],
               foreground=[("active", TEXT)],
+              bordercolor=[("active", BUTTON)], lightcolor=[("active", BUTTON)], darkcolor=[("active", BUTTON)])
+
+    style.configure("CardDanger.TButton", background=SURFACE, foreground=ERROR, bordercolor=SURFACE,
+                    lightcolor=SURFACE, darkcolor=SURFACE, padding=(8, 4), font=font(8, "bold"), width=-1)
+    style.map("CardDanger.TButton",
+              background=[("pressed", BORDER), ("active", BUTTON)],
               bordercolor=[("active", BUTTON)], lightcolor=[("active", BUTTON)], darkcolor=[("active", BUTTON)])
 
     style.configure("Danger.TButton", background=BG, foreground=ERROR, bordercolor=BORDER,
