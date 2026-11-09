@@ -1,6 +1,6 @@
 # Magic Home Control
 
-A local smart-light controller for Flux LED bulbs. The project provides a FastAPI backend, an Angular web interface, and the original Tkinter system-tray desktop client.
+A local smart-light controller for Flux LED bulbs. The project provides a FastAPI backend, an Angular web interface, and a Tkinter desktop app that lives in the system tray.
 
 ## Architecture
 
@@ -24,7 +24,8 @@ The backend is the API boundary for the web application. The desktop client rema
 - Add, test, and remove devices
 - Configurable RGB channel order: RGB, GRB, BGR, GBR, RBG, or BRG
 - FastAPI interactive documentation
-- Tkinter system-tray desktop application
+- Desktop app in the system tray: click the icon for a compact quick-control popup, or open the full window
+- Network scan that finds bulbs and adds them in a few clicks (web and desktop)
 - SQLite device storage
 
 ## Screenshots
@@ -39,11 +40,19 @@ The web application runs as a modern control room with device controls, a color 
 
 ### Desktop Application
 
-The original desktop screenshots are kept here. The desktop client remains available alongside the web application.
+The desktop app lives in the system tray and uses the same dark design and device database as the web app.
 
-![Desktop main window](desktop/assets/main_window.png)
+**Quick controls.** Clicking the tray icon opens a compact popup just above the taskbar: power switch, brightness, color presets, All on / All off, and a link to the full app. Clicking anywhere else closes it.
 
-![Desktop device manager](desktop/assets/device_manager.png)
+![Desktop quick-control popup](docs/screenshots/desktop-quick-popup.png)
+
+**Main window.** Power switch, color wheel with presets and RGB fields, and a brightness slider you can click or drag.
+
+![Desktop main window](docs/screenshots/desktop-main-window.png)
+
+**Devices.** Add a light by IP address, or scan your network and add the bulbs it finds.
+
+![Desktop device manager](docs/screenshots/desktop-device-manager.png)
 
 ## Requirements
 
@@ -55,12 +64,21 @@ For the Docker setup:
 For the desktop client without Docker:
 
 - Python 3.11 or newer
-- Tkinter, normally included with standard Python for Windows
+- Tkinter: included with the standard Python installer on Windows; on Fedora install `python3-tkinter`, on Debian/Ubuntu `python3-tk`
+- Linux with KDE Plasma: `python3-gobject` (PyGObject) for the tray icon; it is usually installed already
 
-Install desktop dependencies:
+Install the desktop dependencies in a virtual environment. On Linux, create it with `--system-site-packages` so the app can use the system's Tkinter and PyGObject:
+
+```bash
+python3 -m venv --system-site-packages .venv
+.venv/bin/pip install pillow pystray flux_led numpy requests
+```
+
+On Windows:
 
 ```powershell
-pip install pillow pystray flux_led numpy requests
+python -m venv .venv
+.venv\Scripts\pip install pillow pystray flux_led numpy requests
 ```
 
 ## Run The Web Application
@@ -94,13 +112,23 @@ docker compose down
 
 ## Run The Desktop Application
 
-The desktop client is kept separately from the web frontend:
+The desktop client runs separately from the web frontend and does not need Docker. From the repository root:
 
-```powershell
-python -m desktop.app.main
+```bash
+.venv/bin/python -m desktop.app.main        # Linux
+.venv\Scripts\python -m desktop.app.main     # Windows
 ```
 
-The desktop application uses the shared SQLite database at `data/devices.db`.
+The app adds an icon to the system tray:
+
+- **Left-click** the icon: open or close the quick-control popup.
+- **Right-click** the icon: menu with Quick controls, Open Magic Home, and Quit.
+- **Open app** in the popup (or **Open Magic Home** in the menu) opens the full window. Its **Devices** button opens the device manager.
+
+On KDE Plasma the app talks to the Plasma tray directly, so a left-click opens the popup right at the icon. On other systems (for example Windows) it uses `pystray`, where a left-click opens the quick controls as well.
+
+The desktop application uses the shared SQLite database at `data/devices.db`, so devices added in the web app also appear here and the other way around.
+
 ## Device Configuration
 
 Use the web interface's **Manage devices** action to add a bulb. A device must be reachable before it can be saved.
@@ -110,7 +138,7 @@ Use the web interface's **Manage devices** action to add a bulb. A device must b
 Instead of typing an IP address, you can search the local network for Flux LED bulbs:
 
 - **Web:** open **Manage devices** and click **Scan network**. Click **Use** next to a bulb to fill in the form, pick the channel order, then click **Add device**.
-- **Desktop:** open the **Device manager** and click **Scan**. New bulbs appear in the list with an **ADD** action that fills in the form; pick the color order and click **Save**.
+- **Desktop:** open the full app, click **Devices**, then **Scan network** in the *Your lights* card. Bulbs that are not saved yet appear with an **Add** button that fills in the form; rename the light if you like, pick the color order and click **Save light**.
 
 The scan sends a UDP broadcast, so the backend container runs with `network_mode: host` in `compose.yaml` (supported on Linux). The API is still served on port 8000 and the frontend reaches it through the Docker host gateway.
 
@@ -157,9 +185,17 @@ Magic-Home-Control/
 │   └── nginx.conf
 ├── desktop/
 │   ├── app/                     Tkinter and tray client
+│   │   ├── main.py              Entry point: tray icon and window handling
+│   │   ├── kde_tray.py          KDE Plasma tray icon (left-click popup, right-click menu)
+│   │   ├── quick_panel.py       Quick-control popup
+│   │   ├── mainWindow.py        Main window
+│   │   ├── DeviceManager.py     Device manager window
+│   │   ├── widgets.py           Shared controls: switch, slider, color presets
+│   │   ├── theme.py             Colors, styles and app icon
 │   │   └── device_repository.py SQLite persistence adapter
-│   ├── assets/                  Desktop images
+│   ├── assets/                  App icon
 │   └── tests/                   Desktop tests
+├── docs/screenshots/            README screenshots
 ├── data/
 │   ├── devices.csv              Migration seed file
 │   └── devices.db               Runtime SQLite database
