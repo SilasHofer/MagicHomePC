@@ -29,6 +29,19 @@
       <div class="manager-backdrop" role="presentation" (click)="managerOpen = false">
         <section class="panel manager-panel" role="dialog" aria-modal="true" aria-labelledby="manager-title" (click)="$event.stopPropagation()">
           <div class="panel-heading"><div><p class="kicker">DEVICE MANAGER</p><h2 id="manager-title">Add a light</h2><p class="device-meta">Register a reachable bulb</p></div><button class="close-button" type="button" (click)="managerOpen = false" aria-label="Close device manager">×</button></div>
+          <div class="scan-section">
+            <div class="scan-heading"><p class="device-meta">Find bulbs on your network</p><button class="outline-button" type="button" (click)="scanNetwork()" [disabled]="scanning">{{ scanning ? 'Scanning...' : 'Scan network' }}</button></div>
+            @if (scanError) { <p class="scan-empty scan-error" role="alert">{{ scanError }}</p> }
+            @if (scanned) {
+              <ul class="scan-results">
+                @for (found of discovered; track found.ip) {
+                  <li><span><strong>{{ found.ip }}</strong><small>{{ found.model || 'Unknown model' }}{{ found.id ? ' · ' + found.id : '' }}</small></span>
+                    @if (isSaved(found)) { <em>Added</em> } @else { <button class="outline-button" type="button" (click)="useDiscovered(found)">Use</button> }
+                  </li>
+                } @empty { <li class="scan-empty">No bulbs answered. Check that they are powered on and on the same network.</li> }
+              </ul>
+            }
+          </div>
           <form (ngSubmit)="addDevice()">
             <label>Name<input name="name" [(ngModel)]="newDevice.name" placeholder="Living room" required></label>
             <label>IP address<input name="ip" [(ngModel)]="newDevice.ip" placeholder="192.168.0.47" required></label>

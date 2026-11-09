@@ -19,3 +19,15 @@
 
 .app-shell .brand-mark, .app-shell .nav-icon, .app-shell .nav-item b, .app-shell .online-dot, .app-shell .pulse, .app-shell .manage-button span, .app-shell .status.on, .app-shell .power-toggle.on, .app-shell .accent-button { background-color: #ff8266; color: #202522; }.app-shell .brand-mark, .app-shell .nav-icon, .app-shell .nav-item b, .app-shell .manage-button span { color: #ff8266; }.app-shell .online-dot, .app-shell .pulse { box-shadow: 0 0 0 4px #633d38; }.app-shell .nav-item.active { box-shadow: inset 3px 0 #ff8266; }.app-shell .status.on, .app-shell .power-toggle.on { border-color: #ff8266; }.app-shell .hex-value, .app-shell output { color: #e4775d; }.app-shell .device-card.selected { border-color: #ff8266; box-shadow: 3px 3px 0 #ff8266; }.app-shell.dark-mode .manage-button { border-color: #ff8266; }.app-shell.dark-mode .icon-button, .app-shell.dark-mode .outline-button { border-color: #485149; }.app-shell.dark-mode .status.on, .app-shell.dark-mode .power-toggle.on { background: #ff8266; }.app-shell.dark-mode .hex-value, .app-shell.dark-mode output, .app-shell.dark-mode .slider-label output { color: #ff9b83; }.app-shell.dark-mode .device-card.selected { border-color: #ff8266; }.app-shell.dark-mode .notice.message { color: #8da7ff; }
 .app-shell .nav-icon, .app-shell .nav-item b, .app-shell .manage-button span { background: transparent; }.app-shell .card-orb { background: radial-gradient(circle at 35% 30%, #fff 0 5%, #ff8266 25%, #8da7ff 60%, #e4e3d5 61%); }
+.scan-section { padding-top: 20px; }
+.scan-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.scan-results { display: grid; gap: 6px; max-height: 200px; overflow-y: auto; margin: 14px 0 0; padding: 0; list-style: none; }
+.scan-results li { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 12px; border: 1px solid #d7d8d0; }
+.scan-results strong { display: block; font: 700 .78rem 'DM Mono', monospace; }
+.scan-results small { display: block; margin-top: 3px; color: #8c928c; font: .61rem 'DM Mono', monospace; }
+.scan-results em { color: #8c928c; font-size: .68rem; font-style: normal; }
+.scan-results .outline-button { padding: 7px 12px; }
+.scan-empty { margin: 14px 0 0; color: #8c928c; font-size: .75rem; }
+.scan-error { color: #b84a32; }
+.dark-mode .scan-results li { border-color: #353d37; }
+.dark-mode .scan-error { color: #ff9a82; }

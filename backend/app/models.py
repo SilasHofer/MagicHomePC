@@ -36,3 +36,10 @@ class DeviceState(BaseModel):
     is_on: bool
     color: tuple[int, int, int]
     brightness: int
+
+
+class DiscoveredDevice(BaseModel):
+    ip: str
+    id: str = ""
+    model: str = ""
+    saved: bool = False

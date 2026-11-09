@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { Device, DeviceCreate, DeviceState } from './device.model';
+import { Device, DeviceCreate, DeviceState, DiscoveredDevice } from './device.model';
 
 @Injectable({ providedIn: 'root' })
 export class DeviceApiService {
@@ -11,6 +11,10 @@ export class DeviceApiService {
 
   list(): Observable<Device[]> {
     return this.http.get<Device[]>(this.baseUrl);
+  }
+
+  scan(): Observable<DiscoveredDevice[]> {
+    return this.http.get<DiscoveredDevice[]>(`${this.baseUrl}/scan`);
   }
 
   add(device: DeviceCreate): Observable<Device> {

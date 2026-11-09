@@ -18,3 +18,10 @@ export interface DeviceCreate {
   type: string;
   color_order: string;
 }
+
+export interface DiscoveredDevice {
+  ip: string;
+  id: string;
+  model: string;
+  saved: boolean;
+}

@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 
 from .bulb_service import BulbService
-from .models import BrightnessUpdate, ColorUpdate, Device, DeviceCheck, DeviceCreate, DeviceState
+from .models import BrightnessUpdate, ColorUpdate, Device, DeviceCheck, DeviceCreate, DeviceState, DiscoveredDevice
 from .repository import DeviceRepository
 
 repository = DeviceRepository(os.getenv("DEVICES_DB", "data/devices.db"))
@@ -39,6 +39,17 @@ def health() -> dict[str, str]:
 @app.get("/api/devices", response_model=list[Device])
 def list_devices() -> list[Device]:
     return repository.list()
+
+
+@app.get("/api/devices/scan", response_model=list[DiscoveredDevice])
+def scan_devices() -> list[DiscoveredDevice]:
+    try:
+        return service.scan()
+    except OSError as error:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Network scan failed: {error}. The backend needs access to the local network to scan.",
+        ) from error
 
 
 @app.post("/api/devices", response_model=Device, status_code=201)
