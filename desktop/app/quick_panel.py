@@ -234,7 +234,15 @@ def _draw_card(card, width, height, radius):
 
 
 def _work_area(window):
-    """The usable screen area without the taskbar (x, y, width, height), from the window manager."""
+    """The usable screen area without the taskbar (x, y, width, height).
+
+    Windows: asked from the system (SPI_GETWORKAREA). Linux/X11: the window manager's
+    _NET_WORKAREA. Anything else, or if that fails: the whole screen.
+    """
+    if window.tk.call("tk", "windowingsystem") == "win32":
+        area = _windows_work_area()
+        if area is not None:
+            return area
     try:
         output = subprocess.run(["xprop", "-root", "_NET_WORKAREA"], capture_output=True, text=True,
                                 timeout=2).stdout
@@ -244,6 +252,23 @@ def _work_area(window):
     except Exception:
         pass
     return 0, 0, window.winfo_screenwidth(), window.winfo_screenheight()
+
+
+class _Rect(ctypes.Structure):
+    _fields_ = [("left", ctypes.c_long), ("top", ctypes.c_long),
+                ("right", ctypes.c_long), ("bottom", ctypes.c_long)]
+
+
+def _windows_work_area():
+    """The primary screen's area without the taskbar, from Windows itself."""
+    try:
+        rect = _Rect()
+        spi_getworkarea = 0x0030
+        if ctypes.windll.user32.SystemParametersInfoW(spi_getworkarea, 0, ctypes.byref(rect), 0):
+            return rect.left, rect.top, rect.right - rect.left, rect.bottom - rect.top
+    except (AttributeError, OSError):
+        pass
+    return None
 
 
 def _place_above_taskbar(window, width, height, x, y, px):

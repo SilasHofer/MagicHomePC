@@ -13,3 +13,8 @@ frontend/node_modules/
 frontend/dist/
 desktop/__pycache__/
 .venv/
+
+# Python packaging build output
+build/
+dist/
+*.egg-info/

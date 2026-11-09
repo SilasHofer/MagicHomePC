@@ -30,8 +30,8 @@ jobs:
         with:
           python-version: "3.12"
           cache: pip
-      - name: Install dependencies
-        run: pip install flux_led numpy pytest
+      - name: Install the desktop app (also checks that the package builds)
+        run: pip install . pytest
       - name: Run tests
         run: python -m pytest -v desktop/tests
 

@@ -1,5 +1,8 @@
+import argparse
+import os
 import queue
 import sys
+import tempfile
 import tkinter as tk
 
 
@@ -103,5 +106,57 @@ def main():
     root.destroy()
 
 
+def acquire_single_instance():
+    """Return a lock that stays held while this app runs, or None if another copy already runs.
+
+    With autostart and an app-menu launcher it is easy to start the app twice, which would
+    put two icons in the tray. The operating system releases the lock when the app exits,
+    even after a crash.
+    """
+    folder = os.environ.get("XDG_RUNTIME_DIR") or tempfile.gettempdir()
+    lock_file = open(os.path.join(folder, "magic-home.lock"), "a+")
+    try:
+        if sys.platform == "win32":
+            import msvcrt
+            msvcrt.locking(lock_file.fileno(), msvcrt.LK_NBLCK, 1)
+        else:
+            import fcntl
+            fcntl.flock(lock_file, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except OSError:
+        lock_file.close()
+        return None
+    return lock_file
+
+
+def cli(argv=None):
+    """The `magic-home` command."""
+    parser = argparse.ArgumentParser(
+        prog="magic-home",
+        description="Magic Home Control: control your Magic Home / Flux LED lights from the system tray.")
+    parser.add_argument("--install-desktop-entry", action="store_true",
+                        help="Linux: add Magic Home to the app menu and start it at login")
+    parser.add_argument("--no-autostart", action="store_true",
+                        help="with --install-desktop-entry: add it to the app menu only, don't start at login")
+    parser.add_argument("--uninstall-desktop-entry", action="store_true",
+                        help="Linux: remove the app menu and start-at-login entries again")
+    args = parser.parse_args(argv)
+
+    if args.install_desktop_entry or args.uninstall_desktop_entry:
+        from . import desktop_entry
+        if args.uninstall_desktop_entry:
+            return desktop_entry.uninstall()
+        return desktop_entry.install(autostart=not args.no_autostart)
+
+    lock = acquire_single_instance()
+    if lock is None:
+        print("Magic Home is already running. Look for its icon in the system tray.")
+        return 1
+    try:
+        main()
+    finally:
+        lock.close()
+    return 0
+
+
 if __name__ == "__main__":
-    main()
+    sys.exit(cli())

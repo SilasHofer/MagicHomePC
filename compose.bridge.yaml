@@ -1,0 +1,29 @@
+# Docker setup for Windows and macOS (Docker Desktop):
+#
+#   docker compose -f compose.bridge.yaml up --build
+#
+# Docker Desktop runs containers inside a virtual machine, so the host networking used by
+# compose.yaml (Linux) is not available there. This file uses Docker's normal networking
+# with published ports instead. Controlling bulbs works the same way (the backend connects
+# to each bulb's IP address), but the network scan cannot find bulbs from here: its UDP
+# broadcast does not leave the virtual machine. Add bulbs by IP address instead, or scan
+# with the desktop app.
+services:
+  backend:
+    build: ./backend
+    environment:
+      DEVICES_DB: /app/data/devices.db
+      CORS_ORIGINS: http://localhost:4200,http://localhost:8080
+    volumes:
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
+    restart: unless-stopped
+
+  frontend:
+    build: ./frontend
+    depends_on:
+      - backend
+    ports:
+      - "8080:80"
+    restart: unless-stopped

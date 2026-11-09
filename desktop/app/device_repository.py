@@ -4,10 +4,11 @@ import os
 from pathlib import Path
 
 
-DEFAULT_FILENAME = os.getenv(
-    "MAGIC_HOME_DEVICES_DB",
-    str(Path(__file__).resolve().parents[2] / "data" / "devices.db"),
-)
+from .paths import default_database
+
+# The repository's data/devices.db when run from a checkout, a per-user file when installed
+# (see paths.py); MAGIC_HOME_DEVICES_DB overrides both.
+DEFAULT_FILENAME = default_database()
 
 def _initialize(filename):
     database = Path(filename)

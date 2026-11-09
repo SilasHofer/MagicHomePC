@@ -1,0 +1,38 @@
+# Packaging for the desktop app only (the backend and the web frontend run with Docker).
+#
+#   pipx install --system-site-packages .           (from a checkout)
+#   pipx install --system-site-packages git+https://github.com/SilasHofer/MagicHomePC.git
+#
+# --system-site-packages: on Linux, Tkinter and PyGObject (used by the KDE tray icon)
+# come from the distribution's packages, not from pip.
+
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "magic-home-control"
+version = "1.0.0"
+description = "Tray app to control Magic Home / Flux LED smart bulbs on your local network"
+readme = "README.md"
+license-files = ["LICENSE"]
+authors = [{ name = "Silas Hofer" }]
+requires-python = ">=3.11"
+dependencies = [
+    "flux_led>=0.24",
+    "pillow",
+    "pystray",
+    "requests",
+]
+
+[project.urls]
+Homepage = "https://github.com/SilasHofer/MagicHomePC"
+
+[project.scripts]
+magic-home = "desktop.app.main:cli"
+
+[tool.setuptools]
+packages = ["desktop", "desktop.app"]
+
+[tool.setuptools.package-data]
+desktop = ["assets/icon.png"]

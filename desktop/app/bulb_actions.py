@@ -1,6 +1,5 @@
 from flux_led import WifiLedBulb
 from colorsys import rgb_to_hsv
-import numpy as np
 import math
 from . import theme
 
@@ -80,10 +79,7 @@ def set_brightness(brightness):
 def get_brightness():
     if(shared_state.bulb is None):
         return 0
-    color = shared_state.bulb.getRgb()
-    color_array = np.array(color)
-    max = color_array.max()
-    return max/255
+    return max(shared_state.bulb.getRgb()) / 255
 
 def get_status():
     return shared_state.bulb.is_on
