@@ -3,9 +3,14 @@
 Only depends on tkinter so it can be imported from anywhere without
 running into the ui_helpers <-> bulb_actions circular import.
 """
+import base64
+import io
 import tkinter as tk
+from pathlib import Path
 from tkinter import font as tkfont
 from tkinter import ttk
+
+ICON_PATH = Path(__file__).resolve().parents[1] / "assets" / "icon.png"
 
 # Palette (same as the web app's dark mode)
 BG = "#151916"
@@ -63,6 +68,8 @@ def apply_theme(root):
     style.configure("TFrame", background=BG)
     style.configure("Card.TFrame", background=SURFACE, relief="solid", borderwidth=1,
                     bordercolor=BORDER)
+    style.configure("Panel.TFrame", background=SURFACE, borderwidth=0)
+    style.configure("TSeparator", background=BORDER)
 
     # Labels
     style.configure("TLabel", background=BG, foreground=TEXT)
@@ -99,6 +106,21 @@ def apply_theme(root):
               background=[("pressed", BG), ("active", BG)],
               foreground=[("active", ACCENT_HOVER)],
               bordercolor=[("active", BG)], lightcolor=[("active", BG)], darkcolor=[("active", BG)])
+
+    style.configure("CardLink.TButton", background=SURFACE, foreground=ACCENT, bordercolor=SURFACE,
+                    lightcolor=SURFACE, darkcolor=SURFACE, padding=(0, 4))
+    style.map("CardLink.TButton",
+              background=[("pressed", SURFACE), ("active", SURFACE)],
+              foreground=[("active", ACCENT_HOVER)],
+              bordercolor=[("active", SURFACE)], lightcolor=[("active", SURFACE)], darkcolor=[("active", SURFACE)])
+
+    style.configure("CardGhost.TButton", background=SURFACE, foreground=MUTED, bordercolor=SURFACE,
+                    lightcolor=SURFACE, darkcolor=SURFACE, padding=(6, 4), font=font(8, "bold"),
+                    width=-1)  # only as wide as the text
+    style.map("CardGhost.TButton",
+              background=[("pressed", BORDER), ("active", BUTTON)],
+              foreground=[("active", TEXT)],
+              bordercolor=[("active", BUTTON)], lightcolor=[("active", BUTTON)], darkcolor=[("active", BUTTON)])
 
     style.configure("Danger.TButton", background=BG, foreground=ERROR, bordercolor=BORDER,
                     lightcolor=BG, darkcolor=BG)
@@ -148,9 +170,9 @@ def apply_theme(root):
 
 
 
-def message_label(parent):
+def message_label(parent, bg=BG):
     """A status line. Uses tk.Label so its color can change per message."""
-    return tk.Label(parent, text="", bg=BG, fg=MUTED, font=font(9), anchor="w", justify="left")
+    return tk.Label(parent, text="", bg=bg, fg=MUTED, font=font(9), anchor="w", justify="left")
 
 
 def set_message(label, text, kind="info"):
@@ -183,3 +205,17 @@ def enable_click_to_jump(scale, low, high):
     scale.bind("<Button-1>", move)
     scale.bind("<B1-Motion>", move)
     scale.bind("<ButtonRelease-1>", lambda event: "break")
+
+
+def app_icon_image():
+    """The app icon as a PIL image (tray and windows)."""
+    from PIL import Image
+    return Image.open(ICON_PATH).convert("RGBA")
+
+
+def icon_png(size):
+    """The icon at this size as base64 PNG data, which tk.PhotoImage reads directly."""
+    from PIL import Image
+    buffer = io.BytesIO()
+    app_icon_image().resize((size, size), Image.LANCZOS).save(buffer, format="PNG")
+    return base64.b64encode(buffer.getvalue())
