@@ -93,6 +93,13 @@ def apply_theme(root):
 
     style.configure("Big.Accent.TButton", padding=(12, 11), font=font(10, "bold"))
 
+    style.configure("Link.TButton", background=BG, foreground=ACCENT, bordercolor=BG,
+                    lightcolor=BG, darkcolor=BG, padding=(0, 6))
+    style.map("Link.TButton",
+              background=[("pressed", BG), ("active", BG)],
+              foreground=[("active", ACCENT_HOVER)],
+              bordercolor=[("active", BG)], lightcolor=[("active", BG)], darkcolor=[("active", BG)])
+
     style.configure("Danger.TButton", background=BG, foreground=ERROR, bordercolor=BORDER,
                     lightcolor=BG, darkcolor=BG)
     style.map("Danger.TButton",
@@ -155,3 +162,24 @@ def style_tree_rows(tree):
     tree.tag_configure("odd", background=SURFACE)
     tree.tag_configure("even", background="#1b211c")
     tree.tag_configure("found", foreground=ACCENT)
+
+
+def enable_click_to_jump(scale, low, high):
+    """Click anywhere on a ttk.Scale to jump to that value, and keep the button down to drag.
+
+    Replaces ttk's default handling, which only moves one step per click on the track.
+    scale.set() also runs the scale's command, so the value is applied right away.
+    """
+    def move(event):
+        left = scale.coords(low)[0]
+        right = scale.coords(high)[0]
+        if right > left:
+            fraction = max(0.0, min(1.0, (event.x - left) / (right - left)))
+            value = round(low + fraction * (high - low))
+            if value != round(scale.get()):
+                scale.set(value)
+        return "break"
+
+    scale.bind("<Button-1>", move)
+    scale.bind("<B1-Motion>", move)
+    scale.bind("<ButtonRelease-1>", lambda event: "break")
