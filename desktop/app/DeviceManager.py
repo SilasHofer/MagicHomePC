@@ -2,140 +2,138 @@ from . import device_repository
 import tkinter as tk
 from tkinter import ttk
 from . import ui_helpers
+from . import theme
+
+COLOR_ORDERS = ("RGB", "GRB", "BGR", "GBR", "RBG", "BRG")
+
 
 def open_add_device_window(icon, callback=None):
     # Check if the window is already open
     if not hasattr(open_add_device_window, "window_opened") or not open_add_device_window.window_opened:
         open_add_device_window.window_opened = True
-            # Create the Tkinter window
+        # Create the Tkinter window (the theme is inherited from the main window's Tk root)
         window = tk.Toplevel()
         window.title("Device manager")
+        window.configure(bg=theme.BG)
+        window.resizable(False, False)
 
+        # Reset the flag whenever this window is destroyed, including when the main
+        # window is closed and takes this window with it (on_close does not run then)
         def on_destroy(event):
             if event.widget is window:
                 open_add_device_window.window_opened = False
 
         window.bind("<Destroy>", on_destroy)
 
-        # Get the current position of the mouse
+        # Open the window at the mouse position
         x, y = window.winfo_pointerxy()
+        window.geometry(f"+{x}+{y}")  # the size follows the content
 
-        # Set the window size
-        window_width = 375
-        window_height = 350
+        root = ttk.Frame(window, padding=(20, 18))
+        root.pack(fill="both", expand=True)
 
-        # Set the window size and position
-        window.geometry(f"{window_width}x{window_height}+{x}+{y}")
+        # --- Header ---
+        ttk.Label(root, text="DEVICE MANAGER", style="Kicker.TLabel").pack(anchor="w")
+        ttk.Label(root, text="Devices", style="Title.TLabel").pack(anchor="w")
+        ttk.Label(root, text="Add a light or scan your network", style="Muted.TLabel").pack(anchor="w", pady=(0, 14))
 
-        frame = tk.Frame(window)
-        frame.pack(pady=5)
+        # --- Form card ---
+        card = ttk.Frame(root, style="Card.TFrame", padding=16)
+        card.pack(fill="x")
+        card.columnconfigure(0, weight=1)
+        card.columnconfigure(1, weight=1)
 
-        name = tk.Entry(frame)
-        name.grid(row=1, column=1, padx=5)
+        ttk.Label(card, text="NAME", style="CardMuted.TLabel").grid(row=0, column=0, columnspan=2, sticky="w")
+        name = ttk.Entry(card)
+        name.grid(row=1, column=0, columnspan=2, sticky="ew", pady=(4, 10))
 
-        # Label for RGB
-        tk.Label(frame, text="Name:").grid(row=0, column=1, padx=5)
+        ttk.Label(card, text="IP ADDRESS", style="CardMuted.TLabel").grid(row=2, column=0, sticky="w")
+        ttk.Label(card, text="COLOR ORDER", style="CardMuted.TLabel").grid(row=2, column=1, sticky="w", padx=(10, 0))
+        ip = ttk.Entry(card)
+        ip.grid(row=3, column=0, sticky="ew", pady=(4, 14))
 
-        ip = tk.Entry(frame)
-        ip.grid(row=3, column=1, padx=5)
-
-        # Label for RGB
-        tk.Label(frame, text="IP:").grid(row=2, column=1, padx=5)
-
-        # Create a StringVar with default
         color_order_var = tk.StringVar(value="RGB")
+        color_order_dropdown = ttk.Combobox(card, textvariable=color_order_var, state="readonly",
+                                            values=COLOR_ORDERS, width=8)
+        color_order_dropdown.grid(row=3, column=1, sticky="ew", padx=(10, 0), pady=(4, 14))
+        color_order_dropdown.current(0)
 
-        # Label
-        tk.Label(frame, text="Color Order:").grid(row=4, column=1, padx=5)
+        buttons = ttk.Frame(card, style="Card.TFrame", padding=0)
+        buttons.configure(borderwidth=0)
+        buttons.grid(row=4, column=0, columnspan=2, sticky="ew")
+        buttons.columnconfigure((0, 1, 2), weight=1, uniform="buttons")
 
-        # Dropdown (Combobox)
-        color_order_dropdown = ttk.Combobox(frame, textvariable=color_order_var, state="readonly")
-        color_order_dropdown['values'] = ("RGB", "GRB", "BGR", "GBR", "RBG", "BRG")
-        color_order_dropdown.grid(row=5, column=1, padx=10, pady=5)
+        Scan = ttk.Button(buttons, text="Scan network",
+                          command=lambda: ui_helpers.scan_network(window, tree, message_label, Scan))
+        Scan.grid(row=0, column=0, sticky="ew", padx=(0, 4))
 
-        # Ensure the default is visible / selected
-        color_order_dropdown.current(0)  # select first value ("RGB")
-        # Optional: color_order_dropdown.set(color_order_var.get())
+        ttk.Button(buttons, text="Test",
+                   command=lambda: ui_helpers.try_to_connect(ip.get(), message_label)
+                   ).grid(row=0, column=1, sticky="ew", padx=4)
 
-        # Check Connection button for the window
-        Check_Connection = tk.Button(frame, text="Check", command=lambda: ui_helpers.try_to_connect(ip.get(),message_label))
-        Check_Connection.grid(row=6, column=1, padx=5,pady=5)
+        ttk.Button(buttons, text="Save", style="Accent.TButton",
+                   command=lambda: ui_helpers.save_device(name, ip, color_order_var, message_label, tree)
+                   ).grid(row=0, column=2, sticky="ew", padx=(4, 0))
 
-        Scan = tk.Button(frame, text="Scan", command=lambda: ui_helpers.scan_network(window, tree, message_label, Scan))
-        Scan.grid(row=6, column=0, padx=5, pady=5)
+        # --- Status line ---
+        message_label = theme.message_label(root)
+        message_label.pack(fill="x", pady=(10, 10))
 
-        # Save button
-        Save = tk.Button(
-            frame,
-            text="Save",
-            command=lambda: (
-                ui_helpers.save_device(name, ip, color_order_var, message_label, tree)
-            )
-        )
-        Save.grid(row=6, column=2, padx=5, pady=5)
+        # --- Device table ---
+        ttk.Label(root, text="YOUR DEVICES", style="Kicker.TLabel").pack(anchor="w", pady=(0, 6))
+        table = ttk.Frame(root)
+        table.pack(fill="both", expand=True)
 
-        # Add the label to display messages
-        message_label = tk.Label(frame, text="", fg="black")
-        message_label.grid(row=7, column=1, columnspan=2, pady=5)
+        tree = ttk.Treeview(table, columns=("Name", "IP", "Order", "Action"), show="headings",
+                            height=7, selectmode="browse")
+        tree.pack(fill="both", expand=True)  # scrolls with the mouse wheel
 
-       # Add a Treeview (table-like) to display devices
-        tree = ttk.Treeview(frame, columns=("Name", "IP","Type","color_order","Action"), show="headings", height=5)
-        tree.grid(row=8, column=0, columnspan=3,padx=5, pady=5)
+        for column, title, width, anchor in (
+            ("Name", "NAME", 110, "w"),
+            ("IP", "IP ADDRESS", 120, "w"),
+            ("Order", "ORDER", 80, "center"),
+            ("Action", "", 76, "center"),
+        ):
+            tree.heading(column, text=title, anchor=anchor)
+            tree.column(column, width=width, anchor=anchor, stretch=column == "Name")
 
-        # Define columns for the Treeview (table)
-        tree.heading("Name", text="Name")
-        tree.heading("IP", text="IP")
-        tree.heading("Type", text="Type")
-        tree.heading("color_order", text="Color Order")
-        tree.heading("Action", text="Action")
-
-
-        tree.column("Name", width=75)
-        tree.column("IP", width=75)
-        tree.column("Type", width=75)
-        tree.column("color_order", width=75)
-        tree.column("Action", width=50)
-
+        theme.style_tree_rows(tree)
         ui_helpers.update_device_list(tree)
 
-
-        # Bind button to "Actions" column in each row
+        # Clicking the "Action" column deletes a saved device or fills the form with a scanned one
         def on_item_click(event):
             region = tree.identify("region", event.x, event.y)
             if region == "cell":
                 col = tree.identify_column(event.x)
                 row_id = tree.identify_row(event.y)
-                if col == "#5":  # This is the "Actions" column
-                    action_text = tree.item(row_id)['values'][4].lower()
+                if col == "#4":  # This is the "Action" column
+                    action_text = str(tree.item(row_id)['values'][3]).lower()
                     device_ip = tree.item(row_id)['values'][1]  # Get the IP of the clicked row
-                    if(action_text == "delete"):
+                    if "delete" in action_text:
                         if device_repository.remove_from_csv(device_ip):
                             ui_helpers.update_device_list(tree)
-                    if(action_text == "add"):
+                            theme.set_message(message_label, f"Removed {device_ip}", "info")
+                    if "add" in action_text:
                         found_name = tree.item(row_id)['values'][0]
                         name.delete(0, tk.END)
                         name.insert(0, found_name)
                         ip.delete(0, tk.END)
                         ip.insert(0, device_ip)
-                        message_label.config(text=f"Press Save to add {device_ip} (color order: {color_order_var.get()})", fg="black")
+                        theme.set_message(message_label, f"Press Save to add {device_ip} (color order: {color_order_var.get()})", "info")
 
-        # Bind click event to the treeview
         tree.bind("<ButtonRelease-1>", on_item_click)
 
-        # Quit button for the window
-        quit_button = tk.Button(frame, text="Close", command=lambda: on_close())
-        quit_button.grid(row=9, column=1, padx=5,pady=5)
+        # --- Footer ---
+        ttk.Button(root, text="Close", command=lambda: on_close()).pack(anchor="e", pady=(12, 0))
 
         # Handle window close event
         def on_close():
             open_add_device_window.window_opened = False  # Reset the flag when the window is closed
             window.destroy()  # Close the window
             if callback:
-                callback() 
+                callback()
 
-        # Bind the window close event to the on_close function
         window.protocol("WM_DELETE_WINDOW", on_close)
-        # Start the Tkinter main loop
         window.mainloop()
 
     else:
