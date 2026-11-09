@@ -7,12 +7,12 @@ from . import theme
 COLOR_ORDERS = ("RGB", "GRB", "BGR", "GBR", "RBG", "BRG")
 
 
-def open_add_device_window(icon, callback=None):
+def open_add_device_window(icon, callback=None, parent=None):
     # Check if the window is already open
     if not hasattr(open_add_device_window, "window_opened") or not open_add_device_window.window_opened:
         open_add_device_window.window_opened = True
-        # Create the Tkinter window (the theme is inherited from the main window's Tk root)
-        window = tk.Toplevel()
+        # A child of the main window, so it closes together with it (the theme comes from the Tk root)
+        window = tk.Toplevel(parent)
         window.title("Device manager")
         window.configure(bg=theme.BG)
         window.resizable(False, False)
@@ -134,7 +134,6 @@ def open_add_device_window(icon, callback=None):
                 callback()
 
         window.protocol("WM_DELETE_WINDOW", on_close)
-        window.mainloop()
 
     else:
         print("Window is already open.")

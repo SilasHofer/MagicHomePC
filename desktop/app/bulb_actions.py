@@ -119,13 +119,27 @@ def get_ip_of_selected_device(selected_device,devices):
             return device[1], device[3]  # Return the IP address and color order of the selected device
     return None  # If no match is found, return None
 
+def connect_device(ip, color_order):
+    """Make this bulb the active one (used by the full window and the quick panel)."""
+    shared_state.bulb = WifiLedBulb(ip)
+    shared_state.current_device_info = color_order
+    shared_state.current_ip = ip
+    shared_state.base_color = None
+    remember_base_color(*bulb_color_ui_order())
+
+
+def set_color(red, green, blue):
+    """Send a color given in R, G, B order to the active bulb, respecting its channel order."""
+    if shared_state.bulb is None:
+        return
+    remember_base_color(red, green, blue)
+    set_rgb(apply_color_order(red, green, blue, shared_state.current_device_info))
+
+
 def change_device(selected_device,selected_device_old,devices,canvas,marker,red_input,green_input,blue_input,message_label,brightness_var=None):
     ip,color_order = get_ip_of_selected_device(selected_device,devices)
     try:
-        shared_state.bulb = WifiLedBulb(ip)
-        shared_state.current_device_info = color_order
-        shared_state.base_color = None
-        remember_base_color(*bulb_color_ui_order())
+        connect_device(ip, color_order)
     except Exception as e:
         theme.set_message(message_label, "No connection to this bulb", "error")
         selected_device.set(selected_device_old)

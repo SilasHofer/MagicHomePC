@@ -7,7 +7,6 @@ from . import ui_helpers as help
 import math
 from colorsys import hsv_to_rgb, rgb_to_hsv
 import functools
-import sys
 from . import DeviceManager
 from . import device_repository
 from . import theme
@@ -43,11 +42,19 @@ def open_window(icon):
     if not hasattr(open_window, "window_opened") or not open_window.window_opened:
         open_window.window_opened = True
 
-        # Create the Tkinter window
-        window = tk.Tk()
+        # A child of the app's hidden Tk root (created in main.py, which also applies the theme)
+        window = tk.Toplevel()
         window.title("Magic Home Control")
-        theme.apply_theme(window)
+        window.configure(bg=theme.BG)
         window.resizable(False, False)
+        open_window.window = window
+
+        # Reset the flag however the window goes away
+        def on_destroy(event):
+            if event.widget is window:
+                open_window.window_opened = False
+
+        window.bind("<Destroy>", on_destroy)
 
         selected_device = tk.StringVar(window)
         selected_device.set("")  # Default value if no devices are connected
@@ -65,7 +72,7 @@ def open_window(icon):
         ttk.Label(titles, text="MAGIC HOME", style="Kicker.TLabel").pack(anchor="w")
         ttk.Label(titles, text="Control", style="Title.TLabel").pack(anchor="w")
         ttk.Button(header, text="Devices",
-                   command=lambda: DeviceManager.open_add_device_window(icon, update_dropdown)
+                   command=lambda: DeviceManager.open_add_device_window(icon, update_dropdown, parent=window)
                    ).pack(side="right")
 
         # --- Device selector ---
@@ -202,22 +209,8 @@ def open_window(icon):
                                           variable=initial_brightness, command=on_brightness)
             brightness_slider.pack(fill="x")
 
-            # Click anywhere on the track to jump straight to that percentage, and keep the
-            # button down to drag from there. Replaces ttk's default handling, which only
-            # moves one step per click on the track.
-            def move_slider_to(event):
-                left = brightness_slider.coords(1)[0]
-                right = brightness_slider.coords(100)[0]
-                if right > left:
-                    fraction = max(0.0, min(1.0, (event.x - left) / (right - left)))
-                    value = round(1 + fraction * 99)
-                    if value != round(brightness_slider.get()):
-                        brightness_slider.set(value)  # set() also sends it to the bulb
-                return "break"
-
-            brightness_slider.bind("<Button-1>", move_slider_to)
-            brightness_slider.bind("<B1-Motion>", move_slider_to)
-            brightness_slider.bind("<ButtonRelease-1>", lambda event: "break")
+            # Click anywhere on the track to jump there, and drag from there
+            theme.enable_click_to_jump(brightness_slider, 1, 100)
 
             # A newly picked color (wheel or R/G/B fields) is sent at its own brightness,
             # so move the slider to match, e.g. 100% for a color from the wheel.
@@ -277,8 +270,11 @@ def open_window(icon):
             if connected_devices:
                 render_device_controls(True)
                 device_dropdown["values"] = [device[0] for device in connected_devices]
+                # Show the bulb that is already active (e.g. picked in the quick panel), else the first
+                start = next((device for device in connected_devices if device[1] == shared_state.current_ip),
+                             connected_devices[0])
                 try:
-                    selected_device.set(connected_devices[0][0])
+                    selected_device.set(start[0])
                 except Exception as e:
                     print(f"Error setting selected device: {e}")
                     render_device_controls(False)
@@ -299,10 +295,9 @@ def open_window(icon):
         y_position = max(0, y - height - 5)
         window.geometry(f"{WINDOW_WIDTH}x{height}+{x_position}+{y_position}")
 
-        # Function to quit the application (stop the icon and exit)
+        # Quit the whole app: ending the root's main loop makes main.py stop the tray icon
         def quit_action(icon):
-            icon.stop()
-            sys.exit()
+            window.master.quit()
 
         # Handle window close event
         def on_close():
@@ -310,6 +305,9 @@ def open_window(icon):
             window.destroy()  # Close the window
 
         window.protocol("WM_DELETE_WINDOW", on_close)
-        window.mainloop()
     else:
-        print("Window is already open.")
+        # Already open: bring it to the front instead
+        window = open_window.window
+        window.deiconify()
+        window.lift()
+        window.focus_force()
