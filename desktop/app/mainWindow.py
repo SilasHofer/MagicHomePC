@@ -10,8 +10,9 @@ import functools
 from . import DeviceManager
 from . import device_repository
 from . import theme
+from .widgets import PRESETS, ColorDots, Slider, ToggleSwitch, scaler
 
-WINDOW_WIDTH = 360
+MIN_WIDTH = 380  # design units, scaled with the display
 
 
 def draw_color_wheel(size, background):
@@ -36,6 +37,18 @@ def draw_color_wheel(size, background):
     return image
 
 
+def card_heading(parent, title, hint=None):
+    """Title (and optional muted hint) at the top left of a card; returns the row for extras on the right."""
+    row = ttk.Frame(parent, style="Panel.TFrame")
+    row.pack(fill="x")
+    titles = ttk.Frame(row, style="Panel.TFrame")
+    titles.pack(side="left")
+    ttk.Label(titles, text=title, style="Card.TLabel", font=theme.font(10, "bold")).pack(anchor="w")
+    if hint:
+        ttk.Label(titles, text=hint, style="Card.TLabel", foreground=theme.MUTED, font=theme.font(8)).pack(anchor="w")
+    return row
+
+
 # Function to open the Tkinter window for light control
 def open_window(icon):
     # Check if the window is already open
@@ -48,6 +61,7 @@ def open_window(icon):
         window.configure(bg=theme.BG)
         window.resizable(False, False)
         open_window.window = window
+        px = scaler(window)
 
         # Reset the flag however the window goes away
         def on_destroy(event):
@@ -60,38 +74,69 @@ def open_window(icon):
         selected_device.set("")  # Default value if no devices are connected
         selected_device_old = ""
         device_trace = None  # id of the trace on selected_device, so it can be replaced on re-render
+        power = {"on": False}
 
-        page = ttk.Frame(window, padding=(20, 18))
+        page = ttk.Frame(window, padding=(px(20), px(18)))
         page.pack(fill="both", expand=True)
 
-        # --- Header ---
+        # --- Header: icon, app name, active bulb + state, Devices button ---
         header = ttk.Frame(page)
         header.pack(fill="x")
+        try:
+            logo = tk.PhotoImage(master=window, data=theme.icon_png(px(36)))
+            ttk.Label(header, image=logo).pack(side="left", padx=(0, px(12)))
+            window.logo = logo  # keep a reference
+        except Exception:
+            pass
         titles = ttk.Frame(header)
         titles.pack(side="left")
-        ttk.Label(titles, text="MAGIC HOME", style="Kicker.TLabel").pack(anchor="w")
-        ttk.Label(titles, text="Control", style="Title.TLabel").pack(anchor="w")
+        ttk.Label(titles, text="Magic Home", font=theme.font(14, "bold")).pack(anchor="w")
+        status_label = ttk.Label(titles, text="", style="Muted.TLabel")
+        status_label.pack(anchor="w")
         ttk.Button(header, text="Devices",
                    command=lambda: DeviceManager.open_add_device_window(icon, update_dropdown, parent=window)
                    ).pack(side="right")
 
-        # --- Device selector ---
-        ttk.Label(page, text="DEVICE", style="Muted.TLabel").pack(anchor="w", pady=(16, 4))
-        device_dropdown = ttk.Combobox(page, textvariable=selected_device, state="readonly")
+        # --- Device picker (only shown with more than one bulb) ---
+        picker_row = ttk.Frame(page)
+        device_dropdown = ttk.Combobox(picker_row, textvariable=selected_device, state="readonly")
         device_dropdown.pack(fill="x")
 
         # --- Footer (packed before the expanding area so it always stays visible) ---
         footer = ttk.Frame(page)
-        footer.pack(fill="x", side="bottom", pady=(12, 0))
+        footer.pack(fill="x", side="bottom", pady=(px(14), 0))
+        ttk.Button(footer, text="All on",
+                   command=lambda: run(lambda: action.turn_on_all_bulbs(device_repository.read_from_csv()),
+                                       "All lights on")).pack(side="left")
+        ttk.Button(footer, text="All off",
+                   command=lambda: run(lambda: action.turn_off_all_bulbs(device_repository.read_from_csv()),
+                                       "All lights off")).pack(side="left", padx=(px(8), 0))
         ttk.Button(footer, text="Quit", style="Danger.TButton",
                    command=lambda: quit_action(icon)).pack(side="right")
 
+        message_label = theme.message_label(page)
+        message_label.pack(fill="x", side="bottom", pady=(px(10), 0))
+
         # Area that holds the controls (rebuilt when the device list changes)
         frame_inside = ttk.Frame(page)
-        frame_inside.pack(fill="both", expand=True, pady=(14, 0))
+        frame_inside.pack(fill="both", expand=True, pady=(px(16), 0))
 
         # The wheel image is the same every time, so draw it once per window
         wheel_image = draw_color_wheel(shared_state.canvas_size, theme.SURFACE)
+
+        def run(command, success=""):
+            """Run a bulb command; show an error instead of crashing if the bulb is unreachable."""
+            try:
+                command()
+            except Exception:
+                theme.set_message(message_label, "The bulb did not respond", "error")
+                return False
+            theme.set_message(message_label, success, "success")
+            return True
+
+        def show_status():
+            name = selected_device.get()
+            status_label.config(text=f"{name}  ·  {'On' if power['on'] else 'Off'}" if name else "No device")
 
         def render_device_controls(show_controls):
             nonlocal device_trace
@@ -105,37 +150,49 @@ def open_window(icon):
                 selected_device.trace_remove("write", device_trace)
                 device_trace = None
 
-            message_label = theme.message_label(frame_inside)
-
             if not show_controls:
-                empty = ttk.Frame(frame_inside, style="Card.TFrame", padding=24)
+                empty = ttk.Frame(frame_inside, style="Card.TFrame", padding=px(24))
                 empty.pack(fill="both", expand=True)
                 ttk.Label(empty, text="No devices connected", style="Card.TLabel",
-                          font=theme.font(12, "bold")).pack(pady=(40, 6))
+                          font=theme.font(12, "bold")).pack(pady=(px(30), px(6)))
                 ttk.Label(empty, text="Open Devices to add a light or scan your network.",
-                          style="Card.TLabel", foreground=theme.MUTED, wraplength=260,
+                          style="Card.TLabel", foreground=theme.MUTED, wraplength=px(280),
                           justify="center").pack()
                 device_dropdown["values"] = ()
+                status_label.config(text="No device")
                 return
 
-            # --- Color card ---
-            card = ttk.Frame(frame_inside, style="Card.TFrame", padding=16)
-            card.pack(fill="x")
+            gap = px(12)
 
-            card_header = ttk.Frame(card, style="Card.TFrame", padding=0)
-            card_header.configure(borderwidth=0)
-            card_header.pack(fill="x")
-            ttk.Label(card_header, text="COLOR", style="CardMuted.TLabel").pack(side="left")
-            hex_label = ttk.Label(card_header, text="", style="Value.TLabel")
+            # --- Power card ---
+            power_card = ttk.Frame(frame_inside, style="Card.TFrame", padding=px(16))
+            power_card.pack(fill="x")
+            power_row = card_heading(power_card, "Power", "Turn this light on or off")
+
+            def toggle_power():
+                was_on = power["on"]
+                if run(action.Toggle_bulb):
+                    power["on"] = not was_on
+                switch.set(power["on"])
+                show_status()
+
+            switch = ToggleSwitch(power_row, px, command=toggle_power)
+            switch.pack(side="right")
+
+            # --- Color card ---
+            color_card = ttk.Frame(frame_inside, style="Card.TFrame", padding=px(16))
+            color_card.pack(fill="x", pady=(gap, 0))
+            color_row = card_heading(color_card, "Color")
+            hex_label = ttk.Label(color_row, text="", style="Value.TLabel")
             hex_label.pack(side="right")
-            swatch = tk.Frame(card_header, width=14, height=14, bg=theme.SURFACE,
+            swatch = tk.Frame(color_row, width=px(16), height=px(16), bg=theme.SURFACE,
                               highlightthickness=1, highlightbackground=theme.BORDER_STRONG)
-            swatch.pack(side="right", padx=(0, 8))
+            swatch.pack(side="right", padx=(0, px(8)))
 
             # Color wheel
-            canvas = tk.Canvas(card, width=shared_state.canvas_size, height=shared_state.canvas_size,
+            canvas = tk.Canvas(color_card, width=shared_state.canvas_size, height=shared_state.canvas_size,
                                bg=theme.SURFACE, highlightthickness=0, cursor="crosshair")
-            canvas.pack(pady=(12, 12))
+            canvas.pack(pady=(px(12), px(12)))
             canvas.create_image(0, 0, anchor="nw", image=wheel_image)
             canvas.image = wheel_image  # keep a reference so Tk does not drop the image
 
@@ -150,11 +207,24 @@ def open_window(icon):
             marker = canvas.create_oval(x - point, y - point, x + point, y + point,
                                         outline="white", width=3)
 
+            # Preset colors
+            def pick_preset(color, name):
+                if not run(lambda: action.set_color(*color)):
+                    return
+                help.update_rgb_values(red_var, green_var, blue_var, *color)  # updates the fields, sends nothing
+                try:
+                    help.move_white_point(canvas, marker)
+                except Exception:
+                    pass
+                dots.select(name)
+
+            dots = ColorDots(color_card, px, on_pick=pick_preset, size=24)
+            dots.pack(fill="x")
+
             # RGB inputs
-            rgb_row = ttk.Frame(card, style="Card.TFrame", padding=0)
-            rgb_row.configure(borderwidth=0)
-            rgb_row.pack(fill="x")
-            rgb_row.columnconfigure((0, 1, 2), weight=1)
+            rgb_row = ttk.Frame(color_card, style="Panel.TFrame")
+            rgb_row.pack(fill="x", pady=(px(12), 0))
+            rgb_row.columnconfigure((0, 1, 2), weight=1, uniform="rgb")
 
             validate_command = window.register(help.validate_rgb_input)
             color = action.get_color()
@@ -163,15 +233,16 @@ def open_window(icon):
             blue_var = tk.StringVar(value=color[2])
 
             for column, (letter, var) in enumerate((("R", red_var), ("G", green_var), ("B", blue_var))):
-                ttk.Label(rgb_row, text=letter, style="CardMuted.TLabel").grid(row=0, column=column, sticky="w",
-                                                                               padx=(0 if column == 0 else 6, 0))
-                ttk.Entry(rgb_row, textvariable=var, validate="key", validatecommand=(validate_command, "%P"),
-                          width=5, justify="center").grid(row=1, column=column, sticky="ew", pady=(3, 0),
-                                                          padx=(0 if column == 0 else 6, 0))
+                cell = ttk.Frame(rgb_row, style="Panel.TFrame")
+                cell.grid(row=0, column=column, sticky="ew", padx=(0 if column == 0 else px(6), 0))
+                ttk.Label(cell, text=letter, style="Card.TLabel", foreground=theme.MUTED,
+                          font=theme.font(8, "bold")).pack(side="left", padx=(0, px(6)))
+                ttk.Entry(cell, textvariable=var, validate="key", validatecommand=(validate_command, "%P"),
+                          width=4, justify="center").pack(side="left", fill="x", expand=True)
                 var.trace_add("write", functools.partial(action.change_color, red_var=red_var, green_var=green_var,
                                                          blue_var=blue_var, canvas=canvas, marker=marker))
 
-            # Swatch and hex value follow the RGB fields
+            # Swatch and hex value follow the RGB fields; a preset ring goes away for other colors
             def update_swatch(*args):
                 try:
                     values = [max(0, min(255, int(var.get()))) for var in (red_var, green_var, blue_var)]
@@ -180,81 +251,65 @@ def open_window(icon):
                 hex_value = "#{:02x}{:02x}{:02x}".format(*values)
                 swatch.config(bg=hex_value)
                 hex_label.config(text=hex_value.upper())
+                preset = dict(PRESETS).get(dots.selected)
+                if preset is not None and tuple(values) != preset:
+                    dots.select(None)
 
             for var in (red_var, green_var, blue_var):
                 var.trace_add("write", update_swatch)
             update_swatch()
 
-            # --- Brightness ---
-            brightness_header = ttk.Frame(card, style="Card.TFrame", padding=0)
-            brightness_header.configure(borderwidth=0)
-            brightness_header.pack(fill="x", pady=(16, 4))
-            ttk.Label(brightness_header, text="BRIGHTNESS", style="CardMuted.TLabel").pack(side="left")
-            brightness_value = ttk.Label(brightness_header, text="", style="Value.TLabel")
+            # --- Brightness card ---
+            brightness_card = ttk.Frame(frame_inside, style="Card.TFrame", padding=px(16))
+            brightness_card.pack(fill="x", pady=(gap, 0))
+            brightness_row = card_heading(brightness_card, "Brightness")
+            brightness_value = ttk.Label(brightness_row, text="", style="Value.TLabel")
             brightness_value.pack(side="right")
 
-            initial_brightness = tk.DoubleVar(value=action.get_brightness() * 100)
+            slider = Slider(brightness_card, px, on_change=lambda value: run(lambda: action.set_brightness(value)))
+            slider.pack(fill="x", pady=(px(10), 0))
+            slider.on_display = lambda value: brightness_value.config(text=f"{round(value)}%")
 
-            # The label follows the slider, whether the user moves it or the app sets it
-            def update_brightness_label(*args):
-                brightness_value.config(text=f"{round(initial_brightness.get())}%")
+            # The app moves the slider through this variable (device change, picked color);
+            # that only moves it - nothing is sent to the bulb.
+            brightness_var = tk.DoubleVar(value=action.get_brightness() * 100)
+            brightness_var.trace_add("write", lambda *args: slider.set(brightness_var.get()))
+            slider.set(brightness_var.get())
 
-            initial_brightness.trace_add("write", update_brightness_label)
-            update_brightness_label()
-
-            def on_brightness(value):
-                action.set_brightness(float(value))
-
-            brightness_slider = ttk.Scale(card, from_=1, to=100, orient=tk.HORIZONTAL,
-                                          variable=initial_brightness, command=on_brightness)
-            brightness_slider.pack(fill="x")
-
-            # Click anywhere on the track to jump there, and drag from there
-            theme.enable_click_to_jump(brightness_slider, 1, 100)
-
-            # A newly picked color (wheel or R/G/B fields) is sent at its own brightness,
+            # A newly picked color (wheel, presets or R/G/B fields) is sent at its own brightness,
             # so move the slider to match, e.g. 100% for a color from the wheel.
-            # Setting the variable only moves the slider; it does not send anything.
             def sync_brightness_to_color(*args):
                 try:
                     values = [max(0, min(255, int(var.get()))) for var in (red_var, green_var, blue_var)]
                 except ValueError:
                     return
                 if max(values) > 0:
-                    initial_brightness.set(max(values) / 255 * 100)
+                    brightness_var.set(max(values) / 255 * 100)
 
             for var in (red_var, green_var, blue_var):
                 var.trace_add("write", sync_brightness_to_color)
 
             canvas.bind("<Button-1>", lambda event: help.on_color_select(event, canvas, marker, red_var, green_var, blue_var))
 
-            # --- Actions ---
-            actions = ttk.Frame(frame_inside)
-            actions.pack(fill="x", pady=(14, 0))
-            actions.columnconfigure((0, 1), weight=1)
-            ttk.Button(actions, text="⏻  Toggle on / off", style="Big.Accent.TButton",
-                       command=lambda: action.Toggle_bulb()).grid(row=0, column=0, columnspan=2, sticky="ew")
-            ttk.Button(actions, text="All on",
-                       command=lambda: action.turn_on_all_bulbs(device_repository.read_from_csv())
-                       ).grid(row=1, column=0, sticky="ew", pady=(8, 0), padx=(0, 4))
-            ttk.Button(actions, text="All off",
-                       command=lambda: action.turn_off_all_bulbs(device_repository.read_from_csv())
-                       ).grid(row=1, column=1, sticky="ew", pady=(8, 0), padx=(4, 0))
+            def on_device_change(*args):
+                action.change_device(
+                    selected_device,
+                    selected_device_old,
+                    device_repository.read_from_csv(),
+                    canvas,
+                    marker,
+                    red_var,
+                    green_var,
+                    blue_var,
+                    message_label,
+                    brightness_var=brightness_var,
+                )
+                power["on"] = shared_state.bulb is not None and bool(shared_state.bulb.is_on)
+                switch.set(power["on"])
+                dots.select(None)
+                show_status()
 
-            message_label.pack(in_=frame_inside, fill="x", pady=(10, 0))
-
-            device_trace = selected_device.trace_add("write", lambda *args: action.change_device(
-                selected_device,
-                selected_device_old,
-                device_repository.read_from_csv(),
-                canvas,
-                marker,
-                red_var,
-                green_var,
-                blue_var,
-                message_label,
-                brightness_var=initial_brightness,
-            ))
+            device_trace = selected_device.trace_add("write", on_device_change)
 
         def update_dropdown():
             new_devices = device_repository.read_from_csv()
@@ -266,6 +321,12 @@ def open_window(icon):
                         connected_devices.append(device)
                 except Exception as e:
                     print(f"Device {device[0]} at {device[1]} connection error: {e}")
+
+            # The picker is only useful with more than one bulb
+            if len(connected_devices) > 1:
+                picker_row.pack(fill="x", pady=(px(16), 0), after=header)
+            else:
+                picker_row.pack_forget()
 
             if connected_devices:
                 render_device_controls(True)
@@ -287,13 +348,13 @@ def open_window(icon):
 
         selected_device_old = update_dropdown()
 
-        # Size the window to its content and open it just above the mouse (the tray icon)
+        # A normal window: size it to its content and center it on the screen
         window.update_idletasks()
+        width = max(px(MIN_WIDTH), window.winfo_reqwidth())
         height = window.winfo_reqheight()
-        x, y = window.winfo_pointerxy()
-        x_position = max(0, x - (WINDOW_WIDTH // 2))
-        y_position = max(0, y - height - 5)
-        window.geometry(f"{WINDOW_WIDTH}x{height}+{x_position}+{y_position}")
+        x_position = max(0, (window.winfo_screenwidth() - width) // 2)
+        y_position = max(0, (window.winfo_screenheight() - height) // 2)
+        window.geometry(f"{width}x{height}+{x_position}+{y_position}")
 
         # Quit the whole app: ending the root's main loop makes main.py stop the tray icon
         def quit_action(icon):

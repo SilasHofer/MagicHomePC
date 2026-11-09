@@ -1,9 +1,7 @@
 import queue
 import sys
 import tkinter as tk
-from pathlib import Path
 
-from PIL import Image, ImageDraw
 
 from . import bulb_actions  # noqa: F401  (import first: avoids the ui_helpers <-> bulb_actions import cycle)
 from . import theme
@@ -18,17 +16,9 @@ TITLE = "Magic Home Control"
 requests = queue.Queue()
 
 
-# Function to create the system tray icon
 def create_image():
-    # Create an image with PIL (Python Imaging Library)
-    width, height = 64, 64
-    image = Image.open(Path(__file__).resolve().parents[1] / "assets" / "icon.png")
-    draw = ImageDraw.Draw(image)
-
-    # Draw a simple circle (could be an icon)
-    draw.ellipse((10, 10, width - 10, height - 10), fill=(255, 0, 0))  # Red circle
-
-    return image
+    """The app icon (tray and windows)."""
+    return theme.app_icon_image()
 
 
 def start_tray(root):
@@ -81,6 +71,9 @@ def main():
     root = tk.Tk()
     root.withdraw()
     theme.apply_theme(root)
+    # Window icon for every window of the app (title bar, task switcher)
+    root.window_icons = [tk.PhotoImage(master=root, data=theme.icon_png(size)) for size in (64, 32, 16)]
+    root.iconphoto(True, *root.window_icons)
 
     def open_full_app():
         open_window(None)
