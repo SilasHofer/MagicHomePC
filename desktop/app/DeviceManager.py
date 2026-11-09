@@ -11,6 +11,12 @@ def open_add_device_window(icon, callback=None):
         window = tk.Toplevel()
         window.title("Device manager")
 
+        def on_destroy(event):
+            if event.widget is window:
+                open_add_device_window.window_opened = False
+
+        window.bind("<Destroy>", on_destroy)
+
         # Get the current position of the mouse
         x, y = window.winfo_pointerxy()
 
@@ -54,6 +60,9 @@ def open_add_device_window(icon, callback=None):
         # Check Connection button for the window
         Check_Connection = tk.Button(frame, text="Check", command=lambda: ui_helpers.try_to_connect(ip.get(),message_label))
         Check_Connection.grid(row=6, column=1, padx=5,pady=5)
+
+        Scan = tk.Button(frame, text="Scan", command=lambda: ui_helpers.scan_network(window, tree, message_label, Scan))
+        Scan.grid(row=6, column=0, padx=5, pady=5)
 
         # Save button
         Save = tk.Button(
@@ -103,7 +112,12 @@ def open_add_device_window(icon, callback=None):
                         if device_repository.remove_from_csv(device_ip):
                             ui_helpers.update_device_list(tree)
                     if(action_text == "add"):
-                        ui_helpers.add_tuya_device(tree,row_id)
+                        found_name = tree.item(row_id)['values'][0]
+                        name.delete(0, tk.END)
+                        name.insert(0, found_name)
+                        ip.delete(0, tk.END)
+                        ip.insert(0, device_ip)
+                        message_label.config(text=f"Press Save to add {device_ip} (color order: {color_order_var.get()})", fg="black")
 
         # Bind click event to the treeview
         tree.bind("<ButtonRelease-1>", on_item_click)

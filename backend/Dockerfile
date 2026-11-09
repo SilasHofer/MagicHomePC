@@ -8,7 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY app ./app
 
 ENV PYTHONUNBUFFERED=1
-ENV DEVICES_FILE=/app/data/devices.csv
+ENV DEVICES_DB=/app/data/devices.db
 
 EXPOSE 8000
 

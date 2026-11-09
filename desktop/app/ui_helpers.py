@@ -1,10 +1,11 @@
 import math
 from . import shared_state
 from colorsys import hsv_to_rgb, rgb_to_hsv
-from flux_led import WifiLedBulb
+from flux_led import BulbScanner, WifiLedBulb
 from . import bulb_actions
 from . import device_repository
 import logging
+import threading
 import tkinter as tk
 
 # Handle user click on the color wheel
@@ -54,13 +55,9 @@ def move_white_point(canvas,marker):
 
 def try_to_connect(ip,message_label):
     try:
-        bulb = WifiLedBulb(ip)
-        if bulb.is_on:  # Check if the bulb is responding
-            message_label.config(text="Connection Successful", fg="green")
-            return True
-        else:
-            message_label.config(text="Bulb found but not responding", fg="orange")
-            return False
+        WifiLedBulb(ip)
+        message_label.config(text="Connection Successful", fg="green")
+        return True
     except ConnectionRefusedError as e:
         message_label.config(text="Network Error", fg="red")
         logging.error(f"Connection Refused for IP: {ip}")
@@ -83,6 +80,49 @@ def update_device_list(tree):
         tree.delete(row)  # Clear previous rows
     for device in devices:
         tree.insert("", "end", values=(device[0], device[1],device[2],device[3], "DELETE"))
+
+    saved_ips = {device[1] for device in devices}
+    for ip in getattr(tree, "discovered", []):
+        if ip not in saved_ips:
+            tree.insert("", "end", values=(f"Light {ip.split('.')[-1]}", ip, "Flux", "-", "ADD"))
+
+
+def scan_network(window, tree, message_label, scan_button, timeout=5):
+    scan_button.config(state="disabled", text="Scanning...")
+    message_label.config(text="Scanning the network...", fg="black")
+    result = {}
+
+    def worker():
+        try:
+            result["found"] = BulbScanner().scan(timeout=timeout)
+        except Exception as e:
+            result["error"] = e
+
+    thread = threading.Thread(target=worker, daemon=True)
+    thread.start()
+
+    def poll():
+        if thread.is_alive():
+            window.after(200, poll)
+            return
+        scan_button.config(state="normal", text="Scan")
+        if "error" in result:
+            logging.error(f"Network scan failed: {result['error']}")
+            message_label.config(text="Scan failed", fg="red")
+            return
+        tree.discovered = sorted(
+            {info["ipaddr"] for info in result["found"] if info.get("ipaddr")},
+            key=lambda ip: tuple(int(part) for part in ip.split(".")),
+        )
+        saved_ips = {device[1] for device in device_repository.read_from_csv()}
+        new_count = len([ip for ip in tree.discovered if ip not in saved_ips])
+        update_device_list(tree)
+        message_label.config(
+            text=f"Found {len(tree.discovered)} bulb(s), {new_count} new. Click ADD to use one.",
+            fg="green" if tree.discovered else "orange",
+        )
+
+    poll()
 
 
 

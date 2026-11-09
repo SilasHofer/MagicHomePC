@@ -1,6 +1,8 @@
-from flux_led import WifiLedBulb
+import ipaddress
 
-from .models import Device, DeviceState
+from flux_led import BulbScanner, WifiLedBulb
+
+from .models import Device, DeviceState, DiscoveredDevice
 
 
 class BulbService:
@@ -85,3 +87,19 @@ class BulbService:
             except Exception:
                 failed.append(ip)
         return failed
+
+    def scan(self, timeout: int = 5) -> list[DiscoveredDevice]:
+        """Broadcast on the local network and return every Flux LED bulb that answers."""
+        saved = {device.ip for device in self.repository.list()}
+        found: dict[str, DiscoveredDevice] = {}
+        for info in BulbScanner().scan(timeout=timeout):
+            ip = info.get("ipaddr")
+            if not ip:
+                continue
+            found[ip] = DiscoveredDevice(
+                ip=ip,
+                id=info.get("id") or "",
+                model=info.get("model") or "",
+                saved=ip in saved,
+            )
+        return sorted(found.values(), key=lambda device: ipaddress.ip_address(device.ip))

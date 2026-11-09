@@ -1,19 +1,27 @@
 services:
   backend:
     build: ./backend
+    # Host networking lets the backend send the UDP broadcast that finds bulbs
+    # on the local network (device scan). The API is served on host port 8000.
+    network_mode: host
+    # Run as your user (not root) so data/devices.db stays writable for the
+    # desktop app, which shares the same database file.
+    user: "${UID:-1000}:${GID:-1000}"
     environment:
       DEVICES_DB: /app/data/devices.db
       CORS_ORIGINS: http://localhost:4200,http://localhost:8080
     volumes:
       - ./data:/app/data
-    ports:
-      - "8000:8000"
     restart: unless-stopped
 
   frontend:
     build: ./frontend
     depends_on:
       - backend
+    # The backend runs on the host network, so point the "backend" name used in
+    # nginx.conf at the Docker host.
+    extra_hosts:
+      - "backend:host-gateway"
     ports:
       - "8080:80"
     restart: unless-stopped

@@ -105,6 +105,15 @@ The desktop application uses the shared SQLite database at `data/devices.db`.
 
 Use the web interface's **Manage devices** action to add a bulb. A device must be reachable before it can be saved.
 
+### Scan for devices
+
+Instead of typing an IP address, you can search the local network for Flux LED bulbs:
+
+- **Web:** open **Manage devices** and click **Scan network**. Click **Use** next to a bulb to fill in the form, pick the channel order, then click **Add device**.
+- **Desktop:** open the **Device manager** and click **Scan**. New bulbs appear in the list with an **ADD** action that fills in the form; pick the color order and click **Save**.
+
+The scan sends a UDP broadcast, so the backend container runs with `network_mode: host` in `compose.yaml` (supported on Linux). The API is still served on port 8000 and the frontend reaches it through the Docker host gateway.
+
 
 After the first backend start, active device data is stored in:
 

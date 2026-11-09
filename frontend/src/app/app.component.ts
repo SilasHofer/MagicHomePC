@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 
 import { DeviceApiService } from './device-api.service';
-import { Device, DeviceCreate } from './device.model';
+import { Device, DeviceCreate, DiscoveredDevice } from './device.model';
 
 @Component({
   selector: 'app-root',
@@ -25,6 +25,10 @@ export class AppComponent implements OnInit, AfterViewInit {
   managerOpen = false;
   darkMode = false;
   checking = false;
+  scanning = false;
+  scanned = false;
+  scanError = '';
+  discovered: DiscoveredDevice[] = [];
   message = '';
   error = '';
   newDevice: DeviceCreate = { name: '', ip: '', type: 'Flux', color_order: 'RGB' };
@@ -203,6 +207,30 @@ export class AppComponent implements OnInit, AfterViewInit {
       next: (result) => this.message = result.reachable ? 'Device responded.' : 'Device did not respond.',
       error: (error: { error?: { detail?: string } }) => this.error = error.error?.detail || 'Device could not be reached.'
     });
+  }
+
+  scanNetwork(): void {
+    this.scanning = true;
+    this.scanError = '';
+    this.api.scan().pipe(finalize(() => this.scanning = false)).subscribe({
+      next: (devices) => {
+        this.discovered = devices;
+        this.scanned = true;
+      },
+      error: (error: { error?: { detail?: string } }) => this.scanError = error.error?.detail || 'The network scan failed.'
+    });
+  }
+
+  isSaved(found: DiscoveredDevice): boolean {
+    return this.devices.some(device => device.ip === found.ip);
+  }
+
+  useDiscovered(found: DiscoveredDevice): void {
+    this.newDevice = {
+      ...this.newDevice,
+      ip: found.ip,
+      name: this.newDevice.name || `Light ${found.ip.split('.').pop()}`
+    };
   }
 
   addDevice(): void {
