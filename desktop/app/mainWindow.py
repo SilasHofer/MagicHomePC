@@ -198,8 +198,40 @@ def open_window(icon):
             def on_brightness(value):
                 action.set_brightness(float(value))
 
-            ttk.Scale(card, from_=1, to=100, orient=tk.HORIZONTAL, variable=initial_brightness,
-                      command=on_brightness).pack(fill="x")
+            brightness_slider = ttk.Scale(card, from_=1, to=100, orient=tk.HORIZONTAL,
+                                          variable=initial_brightness, command=on_brightness)
+            brightness_slider.pack(fill="x")
+
+            # Click anywhere on the track to jump straight to that percentage, and keep the
+            # button down to drag from there. Replaces ttk's default handling, which only
+            # moves one step per click on the track.
+            def move_slider_to(event):
+                left = brightness_slider.coords(1)[0]
+                right = brightness_slider.coords(100)[0]
+                if right > left:
+                    fraction = max(0.0, min(1.0, (event.x - left) / (right - left)))
+                    value = round(1 + fraction * 99)
+                    if value != round(brightness_slider.get()):
+                        brightness_slider.set(value)  # set() also sends it to the bulb
+                return "break"
+
+            brightness_slider.bind("<Button-1>", move_slider_to)
+            brightness_slider.bind("<B1-Motion>", move_slider_to)
+            brightness_slider.bind("<ButtonRelease-1>", lambda event: "break")
+
+            # A newly picked color (wheel or R/G/B fields) is sent at its own brightness,
+            # so move the slider to match, e.g. 100% for a color from the wheel.
+            # Setting the variable only moves the slider; it does not send anything.
+            def sync_brightness_to_color(*args):
+                try:
+                    values = [max(0, min(255, int(var.get()))) for var in (red_var, green_var, blue_var)]
+                except ValueError:
+                    return
+                if max(values) > 0:
+                    initial_brightness.set(max(values) / 255 * 100)
+
+            for var in (red_var, green_var, blue_var):
+                var.trace_add("write", sync_brightness_to_color)
 
             canvas.bind("<Button-1>", lambda event: help.on_color_select(event, canvas, marker, red_var, green_var, blue_var))
 

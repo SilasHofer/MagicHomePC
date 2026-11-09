@@ -32,6 +32,27 @@ def turn_on_all_bulbs(devices):
 def set_rgb(color):
     shared_state.bulb.setRgb(color[0],color[1],color[2])
 
+def normalize_color(red, green, blue):
+    """Scale a color so its brightest channel is 255 (the color at full brightness)."""
+    maximum = max(red, green, blue)
+    if maximum == 0:
+        return None
+    return tuple(min(255, round(value * 255 / maximum)) for value in (red, green, blue))
+
+
+def bulb_color_ui_order():
+    """The bulb's current color, converted from the device's channel order to R, G, B."""
+    order = shared_state.current_device_info or "RGB"
+    mapping = dict(zip(order, shared_state.bulb.getRgb()))
+    return mapping.get('R', 0), mapping.get('G', 0), mapping.get('B', 0)
+
+
+def remember_base_color(red, green, blue):
+    base = normalize_color(red, green, blue)
+    if base is not None:
+        shared_state.base_color = base
+
+
 def set_brightness(brightness):
     # brightness: 0-100
     if shared_state.bulb is None:
@@ -40,31 +61,17 @@ def set_brightness(brightness):
     # normalize brightness to 0.0 - 1.0
     b = max(0.0, min(float(brightness) / 100.0, 1.0))
 
-    # Get device RGB (device channel order) and map to UI-order (R,G,B)
-    device_rgb = shared_state.bulb.getRgb()
-    order = shared_state.current_device_info or "RGB"  # e.g. "GRB"
-    # build mapping from order -> value
-    mapping = {}
-    for ch, val in zip(order, device_rgb):
-        mapping[ch] = val
-    ui_r = mapping.get('R', 0)
-    ui_g = mapping.get('G', 0)
-    ui_b = mapping.get('B', 0)
+    # Scale the remembered full-brightness color, never the bulb's current (already dimmed)
+    # color: re-scaling a dimmed color loses precision and drifts towards white.
+    if shared_state.base_color is None:
+        remember_base_color(*bulb_color_ui_order())
+    if shared_state.base_color is None:
+        return  # bulb is black and no color was chosen yet: nothing to scale
 
-    # if everything is zero, nothing to scale
-    max_val = max(ui_r, ui_g, ui_b)
-    if max_val == 0:
-        # bulb is off or black - set scaled color to 0
-        scaled_r = scaled_g = scaled_b = 0
-    else:
-        # scale so the brightest channel goes to 255, then apply brightness fraction
-        scale = 255.0 / max_val
-        scaled_r = min(255, math.ceil(ui_r * scale * b))
-        scaled_g = min(255, math.ceil(ui_g * scale * b))
-        scaled_b = min(255, math.ceil(ui_b * scale * b))
+    scaled_r, scaled_g, scaled_b = (round(value * b) for value in shared_state.base_color)
 
     # convert UI-order back to device-order before sending
-    # apply_color_order expects (r,g,b, order), where order is device order like "GRB"
+    order = shared_state.current_device_info or "RGB"
     r_dev, g_dev, b_dev = apply_color_order(scaled_r, scaled_g, scaled_b, order)
 
     shared_state.bulb.setRgb(r_dev, g_dev, b_dev)
@@ -93,6 +100,7 @@ def change_color(*args,red_var, green_var, blue_var,canvas,marker):
             green = int(green_var.get())
             blue = int(blue_var.get())
 
+            remember_base_color(red, green, blue)
             r, g, b = apply_color_order(red, green, blue, shared_state.current_device_info)
             set_rgb((r,g,b))
             move_white_point(canvas,marker)
@@ -116,6 +124,8 @@ def change_device(selected_device,selected_device_old,devices,canvas,marker,red_
     try:
         shared_state.bulb = WifiLedBulb(ip)
         shared_state.current_device_info = color_order
+        shared_state.base_color = None
+        remember_base_color(*bulb_color_ui_order())
     except Exception as e:
         theme.set_message(message_label, "No connection to this bulb", "error")
         selected_device.set(selected_device_old)

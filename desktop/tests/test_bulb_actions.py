@@ -115,3 +115,44 @@ def test_get_ip_of_selected_device_emty_device_list():
     ip = get_ip_of_selected_device(mock_selected_device, devices)
     assert ip == None
 
+
+
+class _FakeBulb:
+    def __init__(self, rgb):
+        self.rgb = rgb
+
+    def getRgb(self):
+        return self.rgb
+
+    def setRgb(self, r, g, b):
+        self.rgb = (r, g, b)
+
+
+def test_brightness_drag_keeps_color(monkeypatch):
+    from desktop.app import shared_state
+    from desktop.app.bulb_actions import set_brightness
+
+    monkeypatch.setattr(shared_state, "bulb", _FakeBulb((84, 21, 255)))
+    monkeypatch.setattr(shared_state, "current_device_info", "RGB")
+    monkeypatch.setattr(shared_state, "base_color", None)
+
+    # Drag the slider all the way down and back up a few times
+    for _ in range(3):
+        for value in list(range(100, 0, -1)) + list(range(1, 101)):
+            set_brightness(value)
+
+    assert shared_state.bulb.rgb == (84, 21, 255)
+
+
+def test_brightness_respects_color_order(monkeypatch):
+    from desktop.app import shared_state
+    from desktop.app.bulb_actions import set_brightness
+
+    # Device order GRB: the bulb reports (G, R, B)
+    monkeypatch.setattr(shared_state, "bulb", _FakeBulb((0, 255, 0)))  # pure red
+    monkeypatch.setattr(shared_state, "current_device_info", "GRB")
+    monkeypatch.setattr(shared_state, "base_color", None)
+
+    set_brightness(50)
+
+    assert shared_state.bulb.rgb == (0, 128, 0)  # still red, half brightness
