@@ -2,6 +2,7 @@ from flux_led import WifiLedBulb
 from colorsys import rgb_to_hsv
 import numpy as np
 import math
+from . import theme
 
 from .ui_helpers import move_white_point, update_rgb_values
 from . import shared_state
@@ -110,13 +111,13 @@ def get_ip_of_selected_device(selected_device,devices):
             return device[1], device[3]  # Return the IP address and color order of the selected device
     return None  # If no match is found, return None
 
-def change_device(selected_device,selected_device_old,devices,canvas,marker,red_input,green_input,blue_input,message_label):
+def change_device(selected_device,selected_device_old,devices,canvas,marker,red_input,green_input,blue_input,message_label,brightness_var=None):
     ip,color_order = get_ip_of_selected_device(selected_device,devices)
     try:
         shared_state.bulb = WifiLedBulb(ip)
         shared_state.current_device_info = color_order
     except Exception as e:
-        message_label.config(text="no connection", fg="red")
+        theme.set_message(message_label, "No connection to this bulb", "error")
         selected_device.set(selected_device_old)
         return
 
@@ -124,7 +125,10 @@ def change_device(selected_device,selected_device_old,devices,canvas,marker,red_
     
     move_white_point(canvas,marker)
     update_rgb_values(red_input,green_input,blue_input,color[0], color[1], color[2])
-    message_label.config(text="", fg="red")
+    if brightness_var is not None:
+        # Setting the variable moves the slider without sending anything to the bulb
+        brightness_var.set(get_brightness() * 100)
+    theme.set_message(message_label, "")
     selected_device_old = selected_device.get()
 
 def apply_color_order(r, g, b, order):

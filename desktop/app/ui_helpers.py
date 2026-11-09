@@ -4,6 +4,7 @@ from colorsys import hsv_to_rgb, rgb_to_hsv
 from flux_led import BulbScanner, WifiLedBulb
 from . import bulb_actions
 from . import device_repository
+from . import theme
 import logging
 import threading
 import tkinter as tk
@@ -56,13 +57,13 @@ def move_white_point(canvas,marker):
 def try_to_connect(ip,message_label):
     try:
         WifiLedBulb(ip)
-        message_label.config(text="Connection Successful", fg="green")
+        theme.set_message(message_label, "Connection successful", "success")
         return True
     except ConnectionRefusedError as e:
-        message_label.config(text="Network Error", fg="red")
+        theme.set_message(message_label, "Network error: the bulb refused the connection", "error")
         logging.error(f"Connection Refused for IP: {ip}")
     except Exception as e:
-        message_label.config(text="Unexpected Error", fg="red")
+        theme.set_message(message_label, "Could not reach the bulb", "error")
         logging.error(f"Unexpected error when connecting to {ip}: {e}")
     return False
 
@@ -78,18 +79,23 @@ def update_device_list(tree):
     
     for row in tree.get_children():
         tree.delete(row)  # Clear previous rows
+    row = 0
     for device in devices:
-        tree.insert("", "end", values=(device[0], device[1],device[2],device[3], "DELETE"))
+        tree.insert("", "end", values=(device[0], device[1], device[3], "Delete"),
+                    tags=("odd" if row % 2 else "even",))
+        row += 1
 
     saved_ips = {device[1] for device in devices}
     for ip in getattr(tree, "discovered", []):
         if ip not in saved_ips:
-            tree.insert("", "end", values=(f"Light {ip.split('.')[-1]}", ip, "Flux", "-", "ADD"))
+            tree.insert("", "end", values=(f"Light {ip.split('.')[-1]}", ip, "—", "+ Add"),
+                        tags=("odd" if row % 2 else "even", "found"))
+            row += 1
 
 
 def scan_network(window, tree, message_label, scan_button, timeout=5):
     scan_button.config(state="disabled", text="Scanning...")
-    message_label.config(text="Scanning the network...", fg="black")
+    theme.set_message(message_label, "Scanning the network...", "info")
     result = {}
 
     def worker():
@@ -105,10 +111,10 @@ def scan_network(window, tree, message_label, scan_button, timeout=5):
         if thread.is_alive():
             window.after(200, poll)
             return
-        scan_button.config(state="normal", text="Scan")
+        scan_button.config(state="normal", text="Scan network")
         if "error" in result:
             logging.error(f"Network scan failed: {result['error']}")
-            message_label.config(text="Scan failed", fg="red")
+            theme.set_message(message_label, "Scan failed", "error")
             return
         tree.discovered = sorted(
             {info["ipaddr"] for info in result["found"] if info.get("ipaddr")},
@@ -117,10 +123,10 @@ def scan_network(window, tree, message_label, scan_button, timeout=5):
         saved_ips = {device[1] for device in device_repository.read_from_csv()}
         new_count = len([ip for ip in tree.discovered if ip not in saved_ips])
         update_device_list(tree)
-        message_label.config(
-            text=f"Found {len(tree.discovered)} bulb(s), {new_count} new. Click ADD to use one.",
-            fg="green" if tree.discovered else "orange",
-        )
+        if tree.discovered:
+            theme.set_message(message_label, f"Found {len(tree.discovered)} bulb(s), {new_count} new. Click Add to use one.", "success")
+        else:
+            theme.set_message(message_label, "No bulbs answered. Are they powered on?", "warning")
 
     poll()
 
@@ -130,14 +136,14 @@ def save_device(name,ip, color_order,message_label,tree):
     if try_to_connect(ip.get(),message_label):
         if device_repository.save_to_csv(name.get(),ip.get(),"Flux",color_order.get()):
             update_device_list(tree)
-            message_label.config(text="Device Saved", fg="green")
+            theme.set_message(message_label, "Device saved", "success")
             logging.info(f"Device {name.get()} ({ip.get()}) saved successfully.")
             shared_state.bulb = WifiLedBulb(ip.get())
             return True
-        message_label.config(text="Duplicate device", fg="red")
+        theme.set_message(message_label, "A device with this IP already exists", "error")
         return False
     logging.error(f"Failed to save device {name.get()} ({ip.get()}).")
-    message_label.config(text="Connection Failed", fg="red")
+    theme.set_message(message_label, "Connection failed", "error")
     return False
 
         # Function to validate the input (only allow digits and limit the length to 3 digits)
